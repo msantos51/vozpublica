@@ -4,7 +4,9 @@ export default function HomePage() {
   return (
     <section>
       {/* Grelha principal para alinhar o conteúdo à esquerda e a ilustração à direita. */}
+
       <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
+
         {/* Cartão com resumo geral e ação principal. */}
         <article className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
@@ -41,6 +43,7 @@ export default function HomePage() {
             </div>
           </div>
         </article>
+
 
         {/* Bloco visual inspirado em ilustração 3D abstrata de dados. */}
         <figure className="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-white via-[color:var(--primary-soft)] to-white p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
@@ -92,6 +95,7 @@ export default function HomePage() {
               <div className="flex flex-1 items-center justify-end gap-3">
                 <div className="h-10 w-10 rounded-full border border-white/70 bg-gradient-to-br from-white/80 to-indigo-100/60 shadow-[0_10px_25px_rgba(15,23,42,0.08)]" />
                 <div className="h-12 w-12 rounded-full border border-white/70 bg-gradient-to-br from-white/80 to-sky-100/60 shadow-[0_12px_30px_rgba(15,23,42,0.08)]" />
+
               </div>
             </div>
           </div>

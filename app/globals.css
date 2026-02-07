@@ -5,8 +5,8 @@
   --foreground: #1f2937;
   --surface: #ffffff;
   --surface-muted: #f2f3f8;
-  --primary: #ff7b39;
-  --primary-soft: #ffe1cf;
+  --primary: #8f3fdb;
+  --primary-soft: #f0e2ff;
   --accent: #7b5cff;
 }
 
@@ -28,8 +28,8 @@
     --foreground: #f3f4f6;
     --surface: #151823;
     --surface-muted: #1e2230;
-    --primary: #ff8d52;
-    --primary-soft: #3a2b21;
+    --primary: #9b4ae8;
+    --primary-soft: #2d223a;
     --accent: #9b86ff;
   }
 }

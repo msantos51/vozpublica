@@ -68,17 +68,17 @@ export default function RootLayout({
             </div>
             {/* Ações rápidas alinhadas à direita. */}
             <div className="flex items-center gap-4">
-              <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--surface)] text-slate-500 shadow-sm">
-                <span className="text-sm">🔍</span>
+              {/* Botão de login para acesso rápido do usuário. */}
+              <button className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300">
+                Login
               </button>
-              <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--surface)] text-slate-500 shadow-sm">
-                <span className="text-sm">🔔</span>
-              </button>
+              {/* Resumo do perfil com espaço reservado para foto do usuário. */}
               <div className="flex items-center gap-3 rounded-full bg-[color:var(--surface)] px-4 py-2 shadow-sm">
-                <div className="h-8 w-8 rounded-full bg-[color:var(--primary-soft)]" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-[color:var(--primary)] text-[10px] font-semibold text-[color:var(--primary)]">
+                  Foto
+                </div>
                 <div className="text-sm">
                   <p className="font-medium text-slate-900">Lia Martins</p>
-                  <p className="text-xs text-slate-500">Gestora pública</p>
                 </div>
               </div>
             </div>

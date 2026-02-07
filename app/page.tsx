@@ -15,10 +15,12 @@ export default function HomePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-[color:var(--primary)]">
-                  Resumo semanal
+                  Dá voz ao que pensas.
                 </p>
                 <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-                  Participação cidadã com dados claros e acessíveis.
+                  A Voz Pública é um espaço aberto onde qualquer pessoa pode
+                  participar, votar e acompanhar a opinião coletiva sobre os
+                  temas que realmente importam.
                 </h1>
               </div>
               <div className="hidden h-14 w-14 items-center justify-center rounded-2xl bg-[color:var(--primary-soft)] text-xl text-[color:var(--primary)] md:flex">
@@ -27,8 +29,8 @@ export default function HomePage() {
             </div>
             {/* Texto complementar sobre o painel. */}
             <p className="max-w-2xl text-sm leading-6 text-slate-500">
-              Acompanhe indicadores de transparência, compromissos públicos e
-              sugestões da comunidade em um painel elegante e rápido.
+              Escolhe os temas que queres acompanhar, partilha a tua opinião e
+              ajuda a construir decisões mais claras e participativas.
             </p>
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">
@@ -36,10 +38,10 @@ export default function HomePage() {
                 className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
                 href="/about"
               >
-                Conheça o projeto
+                Quero participar
               </Link>
               <button className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300">
-                Explorar iniciativas
+                Explorar votações
               </button>
             </div>
           </div>

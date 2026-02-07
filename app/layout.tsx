@@ -50,20 +50,20 @@ export default function RootLayout({
                   className="rounded-full bg-[color:var(--primary)] px-4 py-2 text-white transition"
                   href="/"
                 >
-                  Dia
+                  Home
                 </Link>
                 <Link
                   className="rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700"
                   href="/about"
                 >
-                  Semana
+                  About
                 </Link>
-                <button className="rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700">
-                  Mês
-                </button>
-                <button className="rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700">
-                  Ano
-                </button>
+                <Link
+                  className="rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700"
+                  href="/contact"
+                >
+                  Contact
+                </Link>
               </nav>
             </div>
             {/* Ações rápidas alinhadas à direita. */}

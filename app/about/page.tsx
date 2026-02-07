@@ -14,14 +14,18 @@ export default function AboutPage() {
       </header>
 
       {/* Lista com pilares que explicam o funcionamento da plataforma. */}
+
       <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2 md:gap-10">
+
         <article className="card">
           {/* Camada de fundo translúcida para realçar o conteúdo. */}
           <div className="bg" />
           {/* Elemento animado com gradiente que percorre o cartão. */}
           <div className="blob" />
           {/* Conteúdo textual acima das camadas decorativas. */}
+
           <div className="card-content">
+
             {/* Pilar de transparência. */}
             <h2 className="text-lg font-semibold text-zinc-900">
               Transparência
@@ -38,7 +42,9 @@ export default function AboutPage() {
           {/* Elemento animado com gradiente que percorre o cartão. */}
           <div className="blob" />
           {/* Conteúdo textual acima das camadas decorativas. */}
+
           <div className="card-content">
+
             {/* Pilar de participação. */}
             <h2 className="text-lg font-semibold text-zinc-900">
               Participação
@@ -55,7 +61,9 @@ export default function AboutPage() {
           {/* Elemento animado com gradiente que percorre o cartão. */}
           <div className="blob" />
           {/* Conteúdo textual acima das camadas decorativas. */}
+
           <div className="card-content">
+
             {/* Pilar de colaboração institucional. */}
             <h2 className="text-lg font-semibold text-zinc-900">
               Colaboração
@@ -72,7 +80,9 @@ export default function AboutPage() {
           {/* Elemento animado com gradiente que percorre o cartão. */}
           <div className="blob" />
           {/* Conteúdo textual acima das camadas decorativas. */}
+
           <div className="card-content">
+
             {/* Pilar de acessibilidade digital. */}
             <h2 className="text-lg font-semibold text-zinc-900">
               Acessibilidade

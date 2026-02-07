@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
-import Link from "next/link";
 import TopNav from "./components/TopNav";
+import HeaderActions from "./components/HeaderActions";
 import "./globals.css";
 
 // Configura a fonte principal usada em todo o site.
@@ -49,25 +49,8 @@ export default function RootLayout({
               {/* Componente cliente que controla o destaque do menu ativo. */}
               <TopNav />
             </div>
-            {/* Ações rápidas alinhadas à direita. */}
-            <div className="flex items-center gap-4">
-              {/* Botão de login para acesso rápido do usuário. */}
-              <button className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300">
-                Login
-              </button>
-              {/* Link para a área de conta quando não há autenticação. */}
-              <Link
-                className="flex items-center gap-3 rounded-full bg-[color:var(--surface)] px-4 py-2 shadow-sm"
-                href="/account"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-[color:var(--primary)] text-[10px] font-semibold text-[color:var(--primary)]">
-                  Foto
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-slate-900">Lia Martins</p>
-                </div>
-              </Link>
-            </div>
+            {/* Ações rápidas alinhadas à direita (login ou perfil). */}
+            <HeaderActions />
           </header>
 
           {/* Conteúdo principal renderizado por cada página. */}

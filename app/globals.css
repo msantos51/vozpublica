@@ -43,8 +43,10 @@ body {
 /* Define o cartão principal com sombra e alinhamento central. */
 .card {
   position: relative;
-  width: 200px;
-  height: 250px;
+
+  width: min(100%, 240px);
+  height: 280px;
+
   border-radius: 14px;
   z-index: 1;
   overflow: hidden;
@@ -52,6 +54,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  margin: 0 auto;
+
   box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
 }
 
@@ -60,8 +65,10 @@ body {
   position: absolute;
   top: 5px;
   left: 5px;
-  width: 190px;
-  height: 240px;
+
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+
   z-index: 2;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px);
@@ -76,14 +83,26 @@ body {
   z-index: 1;
   top: 50%;
   left: 50%;
-  width: 150px;
-  height: 150px;
+
+  width: 170px;
+  height: 170px;
+
   border-radius: 50%;
   background: radial-gradient(circle, #ffc199 0%, #fa7637 70%);
   opacity: 1;
   filter: blur(12px);
   animation: blob-bounce 5s infinite ease;
 }
+
+
+/* Garante que o conteúdo fica centrado e legível no topo das camadas. */
+.card-content {
+  position: relative;
+  z-index: 3;
+  padding: 0 20px;
+  text-align: center;
+}
+
 
 /* Controla o movimento da bolha para criar o efeito orbitado. */
 @keyframes blob-bounce {

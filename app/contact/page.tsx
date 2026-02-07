@@ -3,7 +3,7 @@ export default function ContactPage() {
     <section className="space-y-8">
       {/* Cabeçalho com título e descrição de contato. */}
       <header className="space-y-3">
-        <h1 className="text-3xl font-semibold text-zinc-900">Contact</h1>
+        <h1 className="text-3xl font-semibold text-zinc-900">Contacto</h1>
         <p className="max-w-2xl text-base leading-7 text-zinc-600">
           Fale com a equipa da Voz Pública para parcerias, dúvidas ou suporte
           institucional.

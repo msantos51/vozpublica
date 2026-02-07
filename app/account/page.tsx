@@ -1,4 +1,44 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+type UserProfile = {
+  fullName: string;
+  email: string;
+  city: string;
+  interest: string;
+  password: string;
+};
+
+const userStorageKey = "vp_user";
+
 export default function AccountPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState<UserProfile>({
+    fullName: "",
+    email: "",
+    city: "",
+    interest: "",
+    password: "",
+  });
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const handleChange = (field: keyof UserProfile, value: string) => {
+    setFormData((previous) => ({ ...previous, [field]: value }));
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFeedback(null);
+
+    // Guarda os dados do utilizador para permitir login posterior.
+    localStorage.setItem(userStorageKey, JSON.stringify(formData));
+    setFeedback("Conta criada com sucesso! Pode iniciar sessão.");
+    router.push("/login");
+  };
+
   return (
     <section className="space-y-8">
       {/* Cabeçalho introdutório da página de criação de conta. */}
@@ -27,7 +67,7 @@ export default function AccountPage() {
             </p>
           </div>
           {/* Formulário com campos essenciais para cadastro. */}
-          <form className="grid gap-4 md:grid-cols-2">
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Nome completo
               <input
@@ -35,6 +75,8 @@ export default function AccountPage() {
                 name="fullName"
                 placeholder="Digite o seu nome"
                 type="text"
+                value={formData.fullName}
+                onChange={(event) => handleChange("fullName", event.target.value)}
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -44,6 +86,8 @@ export default function AccountPage() {
                 name="email"
                 placeholder="voce@email.com"
                 type="email"
+                value={formData.email}
+                onChange={(event) => handleChange("email", event.target.value)}
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -53,6 +97,8 @@ export default function AccountPage() {
                 name="password"
                 placeholder="Crie uma senha segura"
                 type="password"
+                value={formData.password}
+                onChange={(event) => handleChange("password", event.target.value)}
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -62,6 +108,8 @@ export default function AccountPage() {
                 name="city"
                 placeholder="Sua cidade"
                 type="text"
+                value={formData.city}
+                onChange={(event) => handleChange("city", event.target.value)}
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
@@ -71,8 +119,16 @@ export default function AccountPage() {
                 name="interest"
                 placeholder="Ex.: educação, saúde, mobilidade"
                 type="text"
+                value={formData.interest}
+                onChange={(event) => handleChange("interest", event.target.value)}
               />
             </label>
+            {/* Feedback após a criação de conta. */}
+            {feedback && (
+              <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 md:col-span-2">
+                {feedback}
+              </p>
+            )}
             {/* Ações do formulário para envio do cadastro. */}
             <div className="flex flex-wrap items-center gap-3 md:col-span-2">
               <button
@@ -81,9 +137,9 @@ export default function AccountPage() {
               >
                 Criar conta
               </button>
-              <p className="text-xs text-slate-500">
-                Ao criar uma conta, você concorda com os termos de uso.
-              </p>
+              <Link className="text-sm font-semibold text-slate-500" href="/login">
+                Já tenho conta
+              </Link>
             </div>
           </form>
         </div>

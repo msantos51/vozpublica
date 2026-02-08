@@ -8,10 +8,10 @@ export default function AboutPage() {
           {/* Bloco de texto com a história, o propósito e a missão. */}
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold text-zinc-900">
-              Sobre a <span className="text-[#8f3fdb]">Voz Pública</span>
+              Sobre a <span className="text-[#b67ee8]">Voz Pública</span>
             </h1>
             <p className="text-base leading-7 text-justify text-zinc-600">
-              A <span className="text-[#8f3fdb]">Voz Pública</span> nasceu para
+              A <span className="text-[#b67ee8]">Voz Pública</span> nasceu para
               dar espaço à opinião das pessoas. Acreditamos que todos devem
               poder participar, votar e acompanhar a opinião coletiva sobre os
               temas que realmente importam — de forma simples, acessível e
@@ -24,13 +24,13 @@ export default function AboutPage() {
               Há apenas pessoas reais a expressar o que pensam.
             </p>
             <p className="text-base leading-7 text-justify text-zinc-600">
-              Ao mesmo tempo, a <span className="text-[#8f3fdb]">Voz Pública</span>{" "}
+              Ao mesmo tempo, a <span className="text-[#b67ee8]">Voz Pública</span>{" "}
               transforma essa participação em conhecimento. As votações geram
               dados anónimos e agregados que permitem identificar tendências,
               padrões e sinais relevantes da sociedade.
             </p>
             <p className="text-base leading-7 text-justify text-zinc-600">
-              É por isso que a <span className="text-[#8f3fdb]">Voz Pública</span>{" "}
+              É por isso que a <span className="text-[#b67ee8]">Voz Pública</span>{" "}
               é também uma oportunidade para empresas, marcas e organizações.
               Através de estudos de opinião discretos e imparciais, ajudamos a
               compreender melhor públicos, perceções e comportamentos — sem

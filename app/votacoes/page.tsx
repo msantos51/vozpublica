@@ -117,10 +117,10 @@ export default function VotacoesPage() {
     baseResponseCounts
   );
 
-  // Guarda a resposta previamente registada para permitir alteração.
+  // Guarda a resposta previamente registada para impedir alterações.
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
 
-  // Indica se o utilizador já submeteu a resposta para mostrar resultados.
+  // Indica se o utilizador já submeteu a resposta para bloquear novas submissões.
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Mensagem de confirmação exibida após o envio da resposta.
@@ -219,20 +219,19 @@ export default function VotacoesPage() {
       return;
     }
 
-    // Atualiza contagens de forma consistente (se trocar o voto, remove do anterior e soma no novo)
+    // Bloqueia a alteração caso o utilizador já tenha submetido a resposta.
+    if (hasSubmitted && storedVote) {
+      setConfirmationMessage(
+        "A sua resposta já foi submetida e não pode ser alterada."
+      );
+      return;
+    }
+
+    // Atualiza contagens de forma consistente para uma submissão inicial.
     setResponseCounts((previous) => {
       const nextCounts = { ...previous };
 
-      if (storedVote?.option && storedVote.option !== selectedOption) {
-        nextCounts[storedVote.option] = Math.max(
-          (nextCounts[storedVote.option] ?? 1) - 1,
-          0
-        );
-      }
-
-      if (!storedVote || storedVote.option !== selectedOption) {
-        nextCounts[selectedOption] = (nextCounts[selectedOption] ?? 0) + 1;
-      }
+      nextCounts[selectedOption] = (nextCounts[selectedOption] ?? 0) + 1;
 
       return nextCounts;
     });
@@ -246,14 +245,13 @@ export default function VotacoesPage() {
     setStoredVote(nextVote);
     setHasSubmitted(true);
 
-    setConfirmationMessage(
-      storedVote ? "Resposta atualizada com sucesso." : "Resposta registada com sucesso."
-    );
+    setConfirmationMessage("Resposta registada com sucesso.");
   };
 
   const isOpenVoting = votingHighlights[0]?.isOpen ?? false;
   const canParticipate = isLoggedIn && isOpenVoting;
   const hasStoredVote = Boolean(storedVote);
+  const isFormLocked = hasSubmitted && hasStoredVote;
 
   return (
     <section className="space-y-10">
@@ -362,7 +360,7 @@ export default function VotacoesPage() {
                           value={option}
                           checked={selectedOption === option}
                           onChange={() => setSelectedOption(option)}
-                          disabled={!canParticipate}
+                          disabled={!canParticipate || isFormLocked}
                           className="h-4 w-4 text-orange-500"
                         />
                         <span>{option}</span>
@@ -372,10 +370,10 @@ export default function VotacoesPage() {
 
                   <button
                     type="submit"
-                    disabled={!canParticipate}
+                    disabled={!canParticipate || isFormLocked}
                     className="w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
                   >
-                    {hasStoredVote ? "Atualizar resposta" : "Registar resposta"}
+                    {isFormLocked ? "Resposta submetida" : "Registar resposta"}
                   </button>
 
                   {confirmationMessage ? (
@@ -390,10 +388,9 @@ export default function VotacoesPage() {
                     </p>
                   ) : null}
 
-                  {hasStoredVote && isOpenVoting ? (
+                  {isFormLocked ? (
                     <p className="text-sm text-zinc-600">
-                      Pode alterar a sua resposta enquanto a votação estiver
-                      aberta.
+                      A sua resposta já foi submetida e não pode ser alterada.
                     </p>
                   ) : null}
                 </form>

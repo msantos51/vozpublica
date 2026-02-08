@@ -13,14 +13,14 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-[color:var(--primary)]">
                 Dá voz ao que pensas.
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+              <h1 className="mt-2 text-[1.7rem] font-semibold text-justify text-slate-900">
                 A Voz Pública é um espaço aberto onde qualquer pessoa pode
                 participar, votar e acompanhar a opinião coletiva sobre os
                 temas que realmente importam.
               </h1>
             </div>
             {/* Texto complementar sobre o painel. */}
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="text-sm leading-6 text-justify text-slate-500">
               Escolhe os temas que queres acompanhar, partilha a tua opinião e
               ajuda a construir decisões mais claras e participativas.
             </p>

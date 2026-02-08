@@ -94,15 +94,13 @@ body {
   animation: blob-bounce 5s infinite ease;
 }
 
-
-/* Garante que o conteúdo fica centrado e legível no topo das camadas. */
+/* Garante que o conteúdo fica justificado e legível no topo das camadas. */
 .card-content {
   position: relative;
   z-index: 3;
   padding: 0 20px;
-  text-align: center;
+  text-align: justify;
 }
-
 
 /* Controla o movimento da bolha para criar o efeito orbitado. */
 @keyframes blob-bounce {

@@ -41,16 +41,20 @@ export default function RootLayout({
       >
         {/* Container geral que simula o layout com barra lateral e conteúdo central. */}
         <div className="min-h-screen bg-[color:var(--background)]">
-          {/* Barra superior com navegação e ações rápidas. */}
-          <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pb-6 pt-8">
-            {/* Marca e navegação principal do site. */}
-            <div className="flex items-center gap-6">
+          {/* Barra superior com navegação centrada e ações rápidas. */}
+          <header className="mx-auto relative flex w-full max-w-6xl items-center justify-between px-6 pb-6 pt-8">
+            {/* Marca do site alinhada à esquerda. */}
+            <div className="flex items-center">
               <span className="text-xl font-semibold text-slate-900">Voz Pública</span>
-              {/* Componente cliente que controla o destaque do menu ativo. */}
+            </div>
+            {/* Componente cliente que controla o destaque do menu ativo e fica centrado. */}
+            <div className="absolute left-1/2 -translate-x-1/2">
               <TopNav />
             </div>
             {/* Ações rápidas alinhadas à direita (login ou perfil). */}
-            <HeaderActions />
+            <div className="flex items-center justify-end">
+              <HeaderActions />
+            </div>
           </header>
 
           {/* Conteúdo principal renderizado por cada página. */}

@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+
 
 type VotingHighlight = {
   title: string;
@@ -15,6 +17,30 @@ type VotingQuestion = {
   prompt: string;
   options: string[];
 };
+
+
+type UserProfile = {
+  fullName: string;
+  email: string;
+  city: string;
+  interest: string;
+  password: string;
+};
+
+type StoredVote = {
+  email: string;
+  option: string;
+};
+
+const userStorageKey = "vp_user";
+const sessionStorageKey = "vp_session";
+const votingStorageKey = "vp_vote_orcamento_2024";
+const baseResponseCounts: Record<string, number> = {
+  "Requalificação de bairros": 12,
+  "Mobilidade urbana sustentável": 18,
+  "Espaços públicos e lazer": 9,
+};
+
 
 export default function VotacoesPage() {
   // Lista das votações em destaque exibidas no topo da página.
@@ -48,8 +74,9 @@ export default function VotacoesPage() {
   // Pergunta única utilizada para recolher prioridades do orçamento participativo.
   const votingQuestion: VotingQuestion = {
     title: "Orçamento participativo 2024",
-    prompt:
-      "Qual deve ser a prioridade de investimento para 2024?",
+
+    prompt: "Qual deve ser a prioridade de investimento para 2024?",
+
     options: [
       "Requalificação de bairros",
       "Mobilidade urbana sustentável",
@@ -78,20 +105,79 @@ export default function VotacoesPage() {
 
   // Controla se o utilizador abriu o painel de participação da votação aberta.
   const [isParticipationOpen, setIsParticipationOpen] = useState(false);
+
+  // Guarda o estado de login para permitir ou bloquear a participação.
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Guarda o email do utilizador autenticado para limitar um voto por conta.
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+
   // Guarda a opção selecionada no formulário.
   const [selectedOption, setSelectedOption] = useState<string>(
     votingQuestion.options[0]
   );
   // Armazena a contagem de respostas locais para simular recolha de dados.
-  const [responseCounts, setResponseCounts] = useState<Record<string, number>>({
-    "Requalificação de bairros": 12,
-    "Mobilidade urbana sustentável": 18,
-    "Espaços públicos e lazer": 9,
-  });
+
+  const [responseCounts, setResponseCounts] = useState<Record<string, number>>(
+    baseResponseCounts
+  );
+  // Guarda a resposta previamente registada para permitir alteração.
+  const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
+  // Indica se o utilizador já submeteu a resposta para mostrar resultados.
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
   // Mensagem de confirmação exibida após o envio da resposta.
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
     null
   );
+
+
+  useEffect(() => {
+    // Lê a sessão atual e a resposta guardada para sincronizar a experiência.
+    const storedSession = localStorage.getItem(sessionStorageKey);
+    const storedUser = localStorage.getItem(userStorageKey);
+
+    if (!storedSession || !storedUser) {
+      setIsLoggedIn(false);
+      setSessionEmail(null);
+      setResponseCounts(baseResponseCounts);
+      return;
+    }
+
+    const parsedUser = JSON.parse(storedUser) as UserProfile;
+
+    if (parsedUser.email !== storedSession) {
+      setIsLoggedIn(false);
+      setSessionEmail(null);
+      setResponseCounts(baseResponseCounts);
+      return;
+    }
+
+    setIsLoggedIn(true);
+    setSessionEmail(parsedUser.email);
+
+    const storedVoteRaw = localStorage.getItem(votingStorageKey);
+
+    if (!storedVoteRaw) {
+      setResponseCounts(baseResponseCounts);
+      return;
+    }
+
+    const parsedVote = JSON.parse(storedVoteRaw) as StoredVote;
+
+    if (parsedVote.email !== parsedUser.email) {
+      setResponseCounts(baseResponseCounts);
+      return;
+    }
+
+    setStoredVote(parsedVote);
+    setSelectedOption(parsedVote.option);
+    setHasSubmitted(true);
+    setResponseCounts({
+      ...baseResponseCounts,
+      [parsedVote.option]: (baseResponseCounts[parsedVote.option] ?? 0) + 1,
+    });
+  }, [votingQuestion.options]);
+
 
   const totalResponses = useMemo(() => {
     return Object.values(responseCounts).reduce(
@@ -121,12 +207,49 @@ export default function VotacoesPage() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setResponseCounts((previous) => ({
-      ...previous,
-      [selectedOption]: (previous[selectedOption] ?? 0) + 1,
-    }));
-    setConfirmationMessage("Resposta registada com sucesso.");
+
+
+    if (!isLoggedIn || !sessionEmail) {
+      setConfirmationMessage("Faça login para poder participar.");
+      return;
+    }
+
+    setResponseCounts((previous) => {
+      const nextCounts = { ...previous };
+
+      if (storedVote?.option && storedVote.option !== selectedOption) {
+        nextCounts[storedVote.option] = Math.max(
+          (nextCounts[storedVote.option] ?? 1) - 1,
+          0
+        );
+      }
+
+      if (!storedVote || storedVote.option !== selectedOption) {
+        nextCounts[selectedOption] = (nextCounts[selectedOption] ?? 0) + 1;
+      }
+
+      return nextCounts;
+    });
+
+    const nextVote: StoredVote = {
+      email: sessionEmail,
+      option: selectedOption,
+    };
+
+    localStorage.setItem(votingStorageKey, JSON.stringify(nextVote));
+    setStoredVote(nextVote);
+    setHasSubmitted(true);
+    setConfirmationMessage(
+      storedVote
+        ? "Resposta atualizada com sucesso."
+        : "Resposta registada com sucesso."
+    );
   };
+
+  const isOpenVoting = votingHighlights[0]?.isOpen ?? false;
+  const canParticipate = isLoggedIn && isOpenVoting;
+  const hasStoredVote = Boolean(storedVote);
+
 
   return (
     <section className="space-y-10">
@@ -178,7 +301,13 @@ export default function VotacoesPage() {
                     onClick={handleParticipationToggle}
                     className="w-full rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                   >
-                    {isParticipationOpen ? "Fechar votação" : "Participar (Aberta)"}
+
+                    {isParticipationOpen
+                      ? "Fechar votação"
+                      : isLoggedIn
+                        ? "Participar (Aberta)"
+                        : "Login para participar"}
+
                   </button>
                 ) : (
                   <button
@@ -232,6 +361,9 @@ export default function VotacoesPage() {
                           value={option}
                           checked={selectedOption === option}
                           onChange={() => setSelectedOption(option)}
+
+                          disabled={!canParticipate}
+
                           className="h-4 w-4 text-orange-500"
                         />
                         <span>{option}</span>
@@ -241,9 +373,12 @@ export default function VotacoesPage() {
 
                   <button
                     type="submit"
-                    className="w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+
+                    disabled={!canParticipate}
+                    className="w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
                   >
-                    Registar resposta
+                    {hasStoredVote ? "Atualizar resposta" : "Registar resposta"}
+
                   </button>
 
                   {confirmationMessage ? (
@@ -251,37 +386,60 @@ export default function VotacoesPage() {
                       {confirmationMessage}
                     </p>
                   ) : null}
+
+
+                  {!canParticipate ? (
+                    <p className="text-sm text-orange-700">
+                      É necessário ter login ativo para votar.
+                    </p>
+                  ) : null}
+
+                  {hasStoredVote && isOpenVoting ? (
+                    <p className="text-sm text-zinc-600">
+                      Pode alterar a sua resposta enquanto a votação estiver
+                      aberta.
+                    </p>
+                  ) : null}
                 </form>
 
-                {/* Gráfico de barras simples com as respostas acumuladas. */}
+                {/* Painel de resultados apresentado apenas após submissão. */}
                 <div className="space-y-4 rounded-2xl border border-orange-100 bg-white p-6">
-                  <div className="space-y-1">
-                    <h3 className="text-base font-semibold text-zinc-900">
-                      Resultado parcial
-                    </h3>
-                    <p className="text-sm text-zinc-500">
-                      {totalResponses} respostas registadas
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {chartData.map((item) => (
-                      <div key={item.label} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
-                          <span>{item.label}</span>
-                          <span>
-                            {item.percentage}% ({item.count})
-                          </span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-orange-100">
-                          <div
-                            className="h-2 rounded-full bg-orange-500"
-                            style={{ width: `${item.percentage}%` }}
-                          />
-                        </div>
+                  {hasSubmitted ? (
+                    <>
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-zinc-900">
+                          Resultado parcial
+                        </h3>
+                        <p className="text-sm text-zinc-500">
+                          {totalResponses} respostas registadas
+                        </p>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="space-y-4">
+                        {chartData.map((item) => (
+                          <div key={item.label} className="space-y-2">
+                            <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
+                              <span>{item.label}</span>
+                              <span>
+                                {item.percentage}% ({item.count})
+                              </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-orange-100">
+                              <div
+                                className="h-2 rounded-full bg-orange-500"
+                                style={{ width: `${item.percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-4 text-sm text-orange-700">
+                      Submeta a sua resposta para ver os resultados atuais.
+                    </div>
+                  )}
+
                 </div>
               </div>
             ) : (

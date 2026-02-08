@@ -30,6 +30,11 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Aplica um gradiente suave de marca para fundos de secções em destaque. */
+.soft-section-gradient {
+  background: linear-gradient(135deg, rgba(254, 160, 118, 0.16), rgba(182, 126, 232, 0.16));
+}
+
 /* Define o cartão principal com sombra e alinhamento central. */
 .card {
   position: relative;

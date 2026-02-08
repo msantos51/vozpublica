@@ -67,7 +67,7 @@ body {
   outline: 2px solid #ffffff;
 }
 
-/* Define a bolha com gradiente laranja e animação contínua. */
+/* Define a bolha com gradiente roxo e animação contínua. */
 .blob {
   position: absolute;
   z-index: 1;
@@ -78,7 +78,7 @@ body {
   height: 170px;
 
   border-radius: 50%;
-  background: radial-gradient(circle, #fea076 0%, #fea076 70%);
+  background: radial-gradient(circle, #b67ee8 0%, #b67ee8 70%);
   opacity: 1;
   filter: blur(12px);
   animation: blob-bounce 5s infinite ease;

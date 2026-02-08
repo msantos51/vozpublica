@@ -1,6 +1,8 @@
 "use client";
 
+
 import { useEffect, useMemo, useState } from "react";
+
 
 type VotingHighlight = {
   title: string;
@@ -15,6 +17,7 @@ type VotingQuestion = {
   prompt: string;
   options: string[];
 };
+
 
 type UserProfile = {
   fullName: string;
@@ -37,6 +40,7 @@ const baseResponseCounts: Record<string, number> = {
   "Mobilidade urbana sustentável": 18,
   "Espaços públicos e lazer": 9,
 };
+
 
 export default function VotacoesPage() {
   // Lista das votações em destaque exibidas no topo da página.
@@ -70,7 +74,9 @@ export default function VotacoesPage() {
   // Pergunta única utilizada para recolher prioridades do orçamento participativo.
   const votingQuestion: VotingQuestion = {
     title: "Orçamento participativo 2024",
+
     prompt: "Qual deve ser a prioridade de investimento para 2024?",
+
     options: [
       "Requalificação de bairros",
       "Mobilidade urbana sustentável",
@@ -99,15 +105,18 @@ export default function VotacoesPage() {
 
   // Controla se o utilizador abriu o painel de participação da votação aberta.
   const [isParticipationOpen, setIsParticipationOpen] = useState(false);
+
   // Guarda o estado de login para permitir ou bloquear a participação.
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   // Guarda o email do utilizador autenticado para limitar um voto por conta.
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+
   // Guarda a opção selecionada no formulário.
   const [selectedOption, setSelectedOption] = useState<string>(
     votingQuestion.options[0]
   );
   // Armazena a contagem de respostas locais para simular recolha de dados.
+
   const [responseCounts, setResponseCounts] = useState<Record<string, number>>(
     baseResponseCounts
   );
@@ -115,10 +124,12 @@ export default function VotacoesPage() {
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
   // Indica se o utilizador já submeteu a resposta para mostrar resultados.
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
   // Mensagem de confirmação exibida após o envio da resposta.
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
     null
   );
+
 
   useEffect(() => {
     // Lê a sessão atual e a resposta guardada para sincronizar a experiência.
@@ -167,6 +178,7 @@ export default function VotacoesPage() {
     });
   }, [votingQuestion.options]);
 
+
   const totalResponses = useMemo(() => {
     return Object.values(responseCounts).reduce(
       (total, count) => total + count,
@@ -195,6 +207,7 @@ export default function VotacoesPage() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
 
     if (!isLoggedIn || !sessionEmail) {
       setConfirmationMessage("Faça login para poder participar.");
@@ -236,6 +249,7 @@ export default function VotacoesPage() {
   const isOpenVoting = votingHighlights[0]?.isOpen ?? false;
   const canParticipate = isLoggedIn && isOpenVoting;
   const hasStoredVote = Boolean(storedVote);
+
 
   return (
     <section className="space-y-10">
@@ -287,11 +301,13 @@ export default function VotacoesPage() {
                     onClick={handleParticipationToggle}
                     className="w-full rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                   >
+
                     {isParticipationOpen
                       ? "Fechar votação"
                       : isLoggedIn
                         ? "Participar (Aberta)"
                         : "Login para participar"}
+
                   </button>
                 ) : (
                   <button
@@ -345,7 +361,9 @@ export default function VotacoesPage() {
                           value={option}
                           checked={selectedOption === option}
                           onChange={() => setSelectedOption(option)}
+
                           disabled={!canParticipate}
+
                           className="h-4 w-4 text-orange-500"
                         />
                         <span>{option}</span>
@@ -355,10 +373,12 @@ export default function VotacoesPage() {
 
                   <button
                     type="submit"
+
                     disabled={!canParticipate}
                     className="w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
                   >
                     {hasStoredVote ? "Atualizar resposta" : "Registar resposta"}
+
                   </button>
 
                   {confirmationMessage ? (
@@ -366,6 +386,7 @@ export default function VotacoesPage() {
                       {confirmationMessage}
                     </p>
                   ) : null}
+
 
                   {!canParticipate ? (
                     <p className="text-sm text-orange-700">
@@ -418,6 +439,7 @@ export default function VotacoesPage() {
                       Submeta a sua resposta para ver os resultados atuais.
                     </div>
                   )}
+
                 </div>
               </div>
             ) : (

@@ -20,7 +20,7 @@ export default function HomePage() {
               </h1>
             </div>
             {/* Texto complementar sobre o painel. */}
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="text-sm leading-6 text-justify text-slate-500">
               Escolhe os temas que queres acompanhar, partilha a tua opinião e
               ajuda a construir decisões mais claras e participativas.
             </p>

@@ -8,6 +8,7 @@
   --primary: #8f3fdb;
   --primary-soft: #f0e2ff;
   --accent: #7b5cff;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -22,17 +23,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b0c10;
-    --foreground: #f3f4f6;
-    --surface: #151823;
-    --surface-muted: #1e2230;
-    --primary: #9b4ae8;
-    --primary-soft: #2d223a;
-    --accent: #9b86ff;
-  }
-}
 
 body {
   background: var(--background);

@@ -42,17 +42,17 @@ export default function RootLayout({
         {/* Container geral que simula o layout com barra lateral e conteúdo central. */}
         <div className="min-h-screen bg-[color:var(--background)]">
           {/* Barra superior com navegação centrada e ações rápidas. */}
-          <header className="mx-auto relative flex w-full max-w-6xl items-center justify-between px-6 pb-6 pt-8">
-            {/* Marca do site alinhada à esquerda. */}
+          <header className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 pb-6 pt-8 md:flex-row md:items-center md:justify-between">
+            {/* Marca do site alinhada à esquerda em todas as resoluções. */}
             <div className="flex items-center">
               <span className="text-xl font-semibold text-slate-900">Voz Pública</span>
             </div>
-            {/* Componente cliente que controla o destaque do menu ativo e fica centrado. */}
-            <div className="absolute left-1/2 -translate-x-1/2">
+            {/* Navegação principal com alinhamento centralizado em telas maiores. */}
+            <div className="flex w-full justify-start md:w-auto md:flex-1 md:justify-center">
               <TopNav />
             </div>
             {/* Ações rápidas alinhadas à direita (login ou perfil). */}
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-start md:justify-end">
               <HeaderActions />
             </div>
           </header>

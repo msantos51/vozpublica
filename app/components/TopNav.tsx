@@ -26,7 +26,7 @@ export default function TopNav() {
   };
 
   return (
-    <nav className="hidden items-center gap-2 rounded-full bg-[color:var(--surface)] px-2 py-1 text-sm shadow-sm md:flex">
+    <nav className="flex w-full items-center gap-2 overflow-x-auto rounded-full bg-[color:var(--surface)] px-2 py-1 text-sm shadow-sm md:w-auto md:overflow-visible">
       {/* Lista de links principais com destaque na página ativa. */}
       {navigationItems.map((item) => (
         <Link key={item.href} className={getLinkClasses(item.href)} href={item.href}>

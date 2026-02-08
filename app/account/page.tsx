@@ -12,6 +12,11 @@ type UserProfile = {
   password: string;
 };
 
+type FeedbackState = {
+  type: "success" | "error";
+  message: string;
+};
+
 const userStorageKey = "vp_user";
 
 export default function AccountPage() {
@@ -23,7 +28,7 @@ export default function AccountPage() {
     interest: "",
     password: "",
   });
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const handleChange = (field: keyof UserProfile, value: string) => {
     setFormData((previous) => ({ ...previous, [field]: value }));
@@ -33,9 +38,27 @@ export default function AccountPage() {
     event.preventDefault();
     setFeedback(null);
 
+    const normalizedEmail = formData.email.trim().toLowerCase();
+    const storedUser = localStorage.getItem(userStorageKey);
+    const storedProfile = storedUser ? (JSON.parse(storedUser) as UserProfile) : null;
+
+    if (storedProfile?.email?.trim().toLowerCase() === normalizedEmail) {
+      setFeedback({
+        type: "error",
+        message: "Já existe uma conta registada com este e-mail.",
+      });
+      return;
+    }
+
     // Guarda os dados do utilizador para permitir login posterior.
-    localStorage.setItem(userStorageKey, JSON.stringify(formData));
-    setFeedback("Conta criada com sucesso! Pode iniciar sessão.");
+    localStorage.setItem(
+      userStorageKey,
+      JSON.stringify({ ...formData, email: normalizedEmail })
+    );
+    setFeedback({
+      type: "success",
+      message: "Conta criada com sucesso! Pode iniciar sessão.",
+    });
     router.push("/login");
   };
 
@@ -129,8 +152,14 @@ export default function AccountPage() {
               </label>
               {/* Feedback após a criação de conta. */}
               {feedback && (
-                <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-justify text-emerald-700 md:col-span-2">
-                  {feedback}
+                <p
+                  className={`rounded-2xl border px-4 py-3 text-sm text-justify md:col-span-2 ${
+                    feedback.type === "success"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-rose-200 bg-rose-50 text-rose-700"
+                  }`}
+                >
+                  {feedback.message}
                 </p>
               )}
               {/* Ações do formulário para envio do cadastro. */}

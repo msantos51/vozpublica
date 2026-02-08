@@ -5,8 +5,8 @@ export default function EnterprisePage() {
     <section className="space-y-12">
       {/* Contém o conteúdo centrado e agrupado em caixas. */}
       <div className="mx-auto w-full max-w-5xl space-y-12">
-        {/* Hero com proposta de valor e chamadas para ação. */}
-        <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+        {/* Hero com proposta de valor, com fundo em gradiente igual às secções abaixo, e chamadas para ação. */}
+        <header className="soft-section-gradient rounded-[32px] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
             <div className="space-y-4">
               <p className="text-sm font-semibold text-[color:var(--primary)]">

@@ -120,7 +120,7 @@ export default function DashboardPage() {
                 <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                   Nome completo
                   <input
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                    className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                     name="fullName"
                     type="text"
                     value={profile.fullName}
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                 <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                   E-mail
                   <input
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                    className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                     name="email"
                     type="email"
                     value={profile.email}
@@ -140,7 +140,7 @@ export default function DashboardPage() {
                 <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                   Cidade
                   <input
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                    className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                     name="city"
                     type="text"
                     value={profile.city}
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                 <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                   Área de interesse
                   <input
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                    className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                     name="interest"
                     type="text"
                     value={profile.interest}
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                 <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                   Nova senha
                   <input
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                    className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                     name="password"
                     placeholder="Atualize a sua senha"
                     type="password"

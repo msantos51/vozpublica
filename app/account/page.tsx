@@ -75,7 +75,7 @@ export default function AccountPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Nome completo
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="fullName"
                   placeholder="Digite o seu nome"
                   type="text"
@@ -86,7 +86,7 @@ export default function AccountPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 E-mail
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="email"
                   placeholder="voce@email.com"
                   type="email"
@@ -97,7 +97,7 @@ export default function AccountPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Senha
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="password"
                   placeholder="Crie uma senha segura"
                   type="password"
@@ -108,7 +108,7 @@ export default function AccountPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Cidade
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="city"
                   placeholder="Sua cidade"
                   type="text"
@@ -119,7 +119,7 @@ export default function AccountPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                 Área de interesse
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="interest"
                   placeholder="Ex.: educação, saúde, mobilidade"
                   type="text"

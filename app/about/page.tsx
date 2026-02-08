@@ -40,9 +40,9 @@ export default function AboutPage() {
             <p className="text-base leading-7 text-justify text-zinc-600">
               A nossa missão é simples:
             </p>
-            <p className="text-base leading-7 text-justify font-semibold text-zinc-700">
-              dar voz às pessoas e transformar essa voz em dados claros, úteis e
-              responsáveis.
+            <p className="text-base leading-7 text-justify font-semibold text-orange-500">
+              Dar voz às pessoas e transformar essa voz em dados claros, úteis e
+              responsáveis.{" "}
             </p>
           </div>
         </article>

@@ -48,7 +48,7 @@ export default function VotacoesPage() {
         {/* Cabeçalho com resumo da experiência de votações. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
               Participação ativa
             </p>
             <h1 className="text-3xl font-semibold text-zinc-900">Votações</h1>
@@ -78,7 +78,7 @@ export default function VotacoesPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
                     {voting.status}
                   </span>
                   <span className="text-xs font-medium text-zinc-500">
@@ -91,7 +91,7 @@ export default function VotacoesPage() {
         </div>
 
         {/* Guia rápido de como participar. */}
-        <div className="rounded-[32px] border border-emerald-100 bg-white p-8 shadow-[0_15px_35px_rgba(16,185,129,0.08)]">
+        <div className="rounded-[32px] border border-orange-100 bg-white p-8 shadow-[0_15px_35px_rgba(249,115,22,0.12)]">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-zinc-900">
               Como participar
@@ -99,7 +99,7 @@ export default function VotacoesPage() {
             <div className="grid gap-6 md:grid-cols-3">
               {votingSteps.map((step) => (
                 <div key={step.title} className="space-y-2">
-                  <h3 className="text-base font-semibold text-emerald-700">
+                  <h3 className="text-base font-semibold text-orange-700">
                     {step.title}
                   </h3>
                   <p className="text-sm leading-6 text-justify text-zinc-600">

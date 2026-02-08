@@ -1,38 +1,8 @@
 export default function ContactPage() {
   return (
     <section className="space-y-8">
-      {/* Contém o conteúdo centrado e agrupado em caixas. */}
+      {/* Contém apenas o formulário de contacto com o conteúdo centralizado. */}
       <div className="mx-auto w-full max-w-5xl space-y-8">
-        {/* Cabeçalho com título e descrição de contato dentro de um cartão. */}
-        <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-zinc-900">Contacto</h1>
-            <p className="text-base leading-7 text-justify text-zinc-600">
-              Fale com a equipa da Voz Pública para parcerias, dúvidas ou suporte
-              institucional.
-            </p>
-          </div>
-        </header>
-
-        {/* Cartão com informações principais de contato. */}
-        <article className="rounded-[32px] bg-[color:var(--surface)] p-6 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <h2 className="text-lg font-semibold text-zinc-900">Informações</h2>
-          <div className="mt-4 space-y-3 text-sm text-zinc-600">
-            <p className="text-justify">
-              <span className="font-semibold text-zinc-900">Email:</span>{" "}
-              contato@vozpublica.org
-            </p>
-            <p className="text-justify">
-              <span className="font-semibold text-zinc-900">Telefone:</span>{" "}
-              +351 210 000 000
-            </p>
-            <p className="text-justify">
-              <span className="font-semibold text-zinc-900">Atendimento:</span>{" "}
-              Segunda a sexta, 9h às 18h
-            </p>
-          </div>
-        </article>
-
         {/* Cartão com formulário para envio de mensagens. */}
         <article className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
@@ -41,9 +11,9 @@ export default function ContactPage() {
               <p className="text-sm font-semibold text-[color:var(--primary)]">
                 Formulário de contacto
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+              <h1 className="mt-2 text-2xl font-semibold text-slate-900">
                 Envie a sua mensagem para a equipa.
-              </h2>
+              </h1>
               <p className="mt-2 text-sm text-justify text-slate-500">
                 Partilhe dúvidas, sugestões ou solicitações e responderemos em
                 breve.

@@ -66,7 +66,7 @@ export default function HomePage() {
                 <span className="block">Dá voz ao que pensas.</span>
                 <span className="block">Vê o que os outros pensam.</span>
               </p>
-              <h1 className="mt-2 text-[1.7rem] font-semibold text-justify text-slate-900">
+              <h1 className="mt-2 text-[1.45rem] font-semibold text-justify text-slate-900">
                 <span className="block">
                   A <span className="text-[#b67ee8]">Voz Pública</span> é um
                   espaço aberto.

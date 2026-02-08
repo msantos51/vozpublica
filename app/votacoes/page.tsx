@@ -1,8 +1,6 @@
 "use client";
 
-
 import { useEffect, useMemo, useState } from "react";
-
 
 type VotingHighlight = {
   title: string;
@@ -17,7 +15,6 @@ type VotingQuestion = {
   prompt: string;
   options: string[];
 };
-
 
 type UserProfile = {
   fullName: string;
@@ -35,12 +32,12 @@ type StoredVote = {
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 const votingStorageKey = "vp_vote_orcamento_2024";
+
 const baseResponseCounts: Record<string, number> = {
   "Requalificação de bairros": 12,
   "Mobilidade urbana sustentável": 18,
   "Espaços públicos e lazer": 9,
 };
-
 
 export default function VotacoesPage() {
   // Lista das votações em destaque exibidas no topo da página.
@@ -74,9 +71,7 @@ export default function VotacoesPage() {
   // Pergunta única utilizada para recolher prioridades do orçamento participativo.
   const votingQuestion: VotingQuestion = {
     title: "Orçamento participativo 2024",
-
     prompt: "Qual deve ser a prioridade de investimento para 2024?",
-
     options: [
       "Requalificação de bairros",
       "Mobilidade urbana sustentável",
@@ -108,6 +103,7 @@ export default function VotacoesPage() {
 
   // Guarda o estado de login para permitir ou bloquear a participação.
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   // Guarda o email do utilizador autenticado para limitar um voto por conta.
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
@@ -115,13 +111,15 @@ export default function VotacoesPage() {
   const [selectedOption, setSelectedOption] = useState<string>(
     votingQuestion.options[0]
   );
-  // Armazena a contagem de respostas locais para simular recolha de dados.
 
+  // Armazena a contagem de respostas locais para simular recolha de dados.
   const [responseCounts, setResponseCounts] = useState<Record<string, number>>(
     baseResponseCounts
   );
+
   // Guarda a resposta previamente registada para permitir alteração.
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
+
   // Indica se o utilizador já submeteu a resposta para mostrar resultados.
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -129,7 +127,6 @@ export default function VotacoesPage() {
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
     null
   );
-
 
   useEffect(() => {
     // Lê a sessão atual e a resposta guardada para sincronizar a experiência.
@@ -139,6 +136,8 @@ export default function VotacoesPage() {
     if (!storedSession || !storedUser) {
       setIsLoggedIn(false);
       setSessionEmail(null);
+      setStoredVote(null);
+      setHasSubmitted(false);
       setResponseCounts(baseResponseCounts);
       return;
     }
@@ -148,6 +147,8 @@ export default function VotacoesPage() {
     if (parsedUser.email !== storedSession) {
       setIsLoggedIn(false);
       setSessionEmail(null);
+      setStoredVote(null);
+      setHasSubmitted(false);
       setResponseCounts(baseResponseCounts);
       return;
     }
@@ -158,6 +159,8 @@ export default function VotacoesPage() {
     const storedVoteRaw = localStorage.getItem(votingStorageKey);
 
     if (!storedVoteRaw) {
+      setStoredVote(null);
+      setHasSubmitted(false);
       setResponseCounts(baseResponseCounts);
       return;
     }
@@ -165,6 +168,8 @@ export default function VotacoesPage() {
     const parsedVote = JSON.parse(storedVoteRaw) as StoredVote;
 
     if (parsedVote.email !== parsedUser.email) {
+      setStoredVote(null);
+      setHasSubmitted(false);
       setResponseCounts(baseResponseCounts);
       return;
     }
@@ -172,12 +177,13 @@ export default function VotacoesPage() {
     setStoredVote(parsedVote);
     setSelectedOption(parsedVote.option);
     setHasSubmitted(true);
+
+    // Aplica a simulação: base + 1 voto do utilizador
     setResponseCounts({
       ...baseResponseCounts,
       [parsedVote.option]: (baseResponseCounts[parsedVote.option] ?? 0) + 1,
     });
   }, [votingQuestion.options]);
-
 
   const totalResponses = useMemo(() => {
     return Object.values(responseCounts).reduce(
@@ -208,12 +214,12 @@ export default function VotacoesPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-
     if (!isLoggedIn || !sessionEmail) {
       setConfirmationMessage("Faça login para poder participar.");
       return;
     }
 
+    // Atualiza contagens de forma consistente (se trocar o voto, remove do anterior e soma no novo)
     setResponseCounts((previous) => {
       const nextCounts = { ...previous };
 
@@ -239,17 +245,15 @@ export default function VotacoesPage() {
     localStorage.setItem(votingStorageKey, JSON.stringify(nextVote));
     setStoredVote(nextVote);
     setHasSubmitted(true);
+
     setConfirmationMessage(
-      storedVote
-        ? "Resposta atualizada com sucesso."
-        : "Resposta registada com sucesso."
+      storedVote ? "Resposta atualizada com sucesso." : "Resposta registada com sucesso."
     );
   };
 
   const isOpenVoting = votingHighlights[0]?.isOpen ?? false;
   const canParticipate = isLoggedIn && isOpenVoting;
   const hasStoredVote = Boolean(storedVote);
-
 
   return (
     <section className="space-y-10">
@@ -273,11 +277,8 @@ export default function VotacoesPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {votingHighlights.map((voting) => (
             <article key={voting.title} className="card">
-              {/* Camada translúcida para realçar o conteúdo. */}
               <div className="bg" />
-              {/* Efeito visual animado ao fundo do cartão. */}
               <div className="blob" />
-              {/* Conteúdo textual principal do cartão. */}
               <div className="card-content space-y-4">
                 <div className="space-y-2">
                   <h2 className="text-lg font-semibold text-zinc-900">
@@ -287,6 +288,7 @@ export default function VotacoesPage() {
                     {voting.description}
                   </p>
                 </div>
+
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
                     {voting.status}
@@ -295,19 +297,18 @@ export default function VotacoesPage() {
                     {voting.deadline}
                   </span>
                 </div>
+
                 {voting.isOpen ? (
                   <button
                     type="button"
                     onClick={handleParticipationToggle}
                     className="w-full rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
                   >
-
                     {isParticipationOpen
                       ? "Fechar votação"
                       : isLoggedIn
                         ? "Participar (Aberta)"
                         : "Login para participar"}
-
                   </button>
                 ) : (
                   <button
@@ -341,7 +342,6 @@ export default function VotacoesPage() {
 
             {isParticipationOpen ? (
               <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                {/* Formulário de resposta única. */}
                 <form
                   onSubmit={handleSubmit}
                   className="space-y-4 rounded-2xl border border-orange-100 bg-orange-50/40 p-6"
@@ -350,6 +350,7 @@ export default function VotacoesPage() {
                     <legend className="text-base font-semibold text-zinc-900">
                       Selecione uma prioridade
                     </legend>
+
                     {votingQuestion.options.map((option) => (
                       <label
                         key={option}
@@ -361,9 +362,7 @@ export default function VotacoesPage() {
                           value={option}
                           checked={selectedOption === option}
                           onChange={() => setSelectedOption(option)}
-
                           disabled={!canParticipate}
-
                           className="h-4 w-4 text-orange-500"
                         />
                         <span>{option}</span>
@@ -373,12 +372,10 @@ export default function VotacoesPage() {
 
                   <button
                     type="submit"
-
                     disabled={!canParticipate}
                     className="w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
                   >
                     {hasStoredVote ? "Atualizar resposta" : "Registar resposta"}
-
                   </button>
 
                   {confirmationMessage ? (
@@ -386,7 +383,6 @@ export default function VotacoesPage() {
                       {confirmationMessage}
                     </p>
                   ) : null}
-
 
                   {!canParticipate ? (
                     <p className="text-sm text-orange-700">
@@ -402,7 +398,6 @@ export default function VotacoesPage() {
                   ) : null}
                 </form>
 
-                {/* Painel de resultados apresentado apenas após submissão. */}
                 <div className="space-y-4 rounded-2xl border border-orange-100 bg-white p-6">
                   {hasSubmitted ? (
                     <>
@@ -439,7 +434,6 @@ export default function VotacoesPage() {
                       Submeta a sua resposta para ver os resultados atuais.
                     </div>
                   )}
-
                 </div>
               </div>
             ) : (
@@ -451,7 +445,6 @@ export default function VotacoesPage() {
           </div>
         </section>
 
-        {/* Guia rápido de como participar. */}
         <div className="rounded-[32px] border border-orange-100 bg-white p-8 shadow-[0_15px_35px_rgba(249,115,22,0.12)]">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-zinc-900">

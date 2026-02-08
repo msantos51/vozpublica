@@ -24,7 +24,7 @@ export default function ContactPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Nome
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="name"
                   placeholder="Digite o seu nome"
                   type="text"
@@ -33,7 +33,7 @@ export default function ContactPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 E-mail
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="email"
                   placeholder="voce@email.com"
                   type="email"
@@ -42,7 +42,7 @@ export default function ContactPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                 Assunto
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="subject"
                   placeholder="Ex.: parceria, suporte, imprensa"
                   type="text"
@@ -51,7 +51,7 @@ export default function ContactPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                 Mensagem
                 <textarea
-                  className="min-h-[140px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input min-h-[140px] rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="message"
                   placeholder="Escreva a sua mensagem"
                 />

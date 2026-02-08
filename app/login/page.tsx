@@ -77,7 +77,7 @@ export default function LoginPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                 E-mail
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="email"
                   placeholder="voce@email.com"
                   type="email"
@@ -88,7 +88,7 @@ export default function LoginPage() {
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                 Senha
                 <input
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)] focus:bg-white"
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="password"
                   placeholder="Digite a sua senha"
                   type="password"

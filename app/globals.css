@@ -30,6 +30,25 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Aplica um gradiente suave às caixas de texto para dar profundidade. */
+.soft-gradient-input {
+  background-color: #ffffff;
+  background-image: linear-gradient(
+    135deg,
+    rgba(254, 160, 118, 0.22),
+    rgba(182, 126, 232, 0.22)
+  );
+}
+
+/* Realça o gradiente quando o campo recebe foco. */
+.soft-gradient-input:focus {
+  background-image: linear-gradient(
+    135deg,
+    rgba(254, 160, 118, 0.32),
+    rgba(182, 126, 232, 0.32)
+  );
+}
+
 /* Define o cartão principal com sombra e alinhamento central. */
 .card {
   position: relative;

@@ -32,6 +32,11 @@ type StoredVote = {
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 const votingStorageKey = "vp_vote_orcamento_2024";
+const baseResponseCounts: Record<string, number> = {
+  "Requalificação de bairros": 12,
+  "Mobilidade urbana sustentável": 18,
+  "Espaços públicos e lazer": 9,
+};
 
 export default function VotacoesPage() {
   // Lista das votações em destaque exibidas no topo da página.
@@ -103,11 +108,9 @@ export default function VotacoesPage() {
     votingQuestion.options[0]
   );
   // Armazena a contagem de respostas locais para simular recolha de dados.
-  const [responseCounts, setResponseCounts] = useState<Record<string, number>>({
-    "Requalificação de bairros": 12,
-    "Mobilidade urbana sustentável": 18,
-    "Espaços públicos e lazer": 9,
-  });
+  const [responseCounts, setResponseCounts] = useState<Record<string, number>>(
+    baseResponseCounts
+  );
   // Guarda a resposta previamente registada para permitir alteração.
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
   // Indica se o utilizador já submeteu a resposta para mostrar resultados.
@@ -125,6 +128,7 @@ export default function VotacoesPage() {
     if (!storedSession || !storedUser) {
       setIsLoggedIn(false);
       setSessionEmail(null);
+      setResponseCounts(baseResponseCounts);
       return;
     }
 
@@ -133,6 +137,7 @@ export default function VotacoesPage() {
     if (parsedUser.email !== storedSession) {
       setIsLoggedIn(false);
       setSessionEmail(null);
+      setResponseCounts(baseResponseCounts);
       return;
     }
 
@@ -142,22 +147,24 @@ export default function VotacoesPage() {
     const storedVoteRaw = localStorage.getItem(votingStorageKey);
 
     if (!storedVoteRaw) {
+      setResponseCounts(baseResponseCounts);
       return;
     }
 
     const parsedVote = JSON.parse(storedVoteRaw) as StoredVote;
 
     if (parsedVote.email !== parsedUser.email) {
+      setResponseCounts(baseResponseCounts);
       return;
     }
 
     setStoredVote(parsedVote);
     setSelectedOption(parsedVote.option);
     setHasSubmitted(true);
-    setResponseCounts((previous) => ({
-      ...previous,
-      [parsedVote.option]: (previous[parsedVote.option] ?? 0) + 1,
-    }));
+    setResponseCounts({
+      ...baseResponseCounts,
+      [parsedVote.option]: (baseResponseCounts[parsedVote.option] ?? 0) + 1,
+    });
   }, [votingQuestion.options]);
 
   const totalResponses = useMemo(() => {
@@ -204,7 +211,9 @@ export default function VotacoesPage() {
         );
       }
 
-      nextCounts[selectedOption] = (nextCounts[selectedOption] ?? 0) + 1;
+      if (!storedVote || storedVote.option !== selectedOption) {
+        nextCounts[selectedOption] = (nextCounts[selectedOption] ?? 0) + 1;
+      }
 
       return nextCounts;
     });

@@ -5,9 +5,9 @@
   --foreground: #1f2937;
   --surface: #ffffff;
   --surface-muted: #f2f3f8;
-  --primary: #8f3fdb;
-  --primary-soft: #f0e2ff;
-  --accent: #7b5cff;
+  --primary: #b67ee8;
+  --primary-soft: #b67ee8;
+  --accent: #b67ee8;
   color-scheme: light;
 }
 
@@ -78,7 +78,7 @@ body {
   height: 170px;
 
   border-radius: 50%;
-  background: radial-gradient(circle, #ffc199 0%, #fa7637 70%);
+  background: radial-gradient(circle, #fea076 0%, #fea076 70%);
   opacity: 1;
   filter: blur(12px);
   animation: blob-bounce 5s infinite ease;

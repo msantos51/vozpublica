@@ -38,7 +38,7 @@ export default function HomePage() {
                 Dá voz ao que pensas.
               </p>
               <h1 className="mt-2 text-[1.7rem] font-semibold text-justify text-slate-900">
-                A <span className="text-[#8f3fdb]">Voz Pública</span> é um espaço
+                A <span className="text-[#b67ee8]">Voz Pública</span> é um espaço
                 aberto onde qualquer pessoa pode participar, votar e acompanhar
                 a opinião coletiva sobre os temas que realmente importam.
               </h1>
@@ -95,11 +95,11 @@ export default function HomePage() {
                   </div>
                   <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full bg-[#fa7637]"
+                      className="h-full bg-[#fea076]"
                       style={{ width: `${item.primaryValue}%` }}
                     />
                     <div
-                      className="h-full bg-[#8f3fdb]"
+                      className="h-full bg-[#b67ee8]"
                       style={{ width: `${item.secondaryValue}%` }}
                     />
                   </div>

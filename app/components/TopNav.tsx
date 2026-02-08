@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navigationItems = [
@@ -29,9 +28,10 @@ export default function TopNav() {
     <nav className="flex w-full items-center gap-2 overflow-x-auto rounded-full bg-[color:var(--surface)] px-2 py-1 text-sm shadow-sm md:w-auto md:overflow-visible">
       {/* Lista de links principais com destaque na página ativa. */}
       {navigationItems.map((item) => (
-        <Link key={item.href} className={getLinkClasses(item.href)} href={item.href}>
+        // Usa âncora simples para garantir navegação mesmo quando o router cliente falha.
+        <a key={item.href} className={getLinkClasses(item.href)} href={item.href}>
           {item.label}
-        </Link>
+        </a>
       ))}
     </nav>
   );

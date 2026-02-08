@@ -1,8 +1,32 @@
 import Link from "next/link";
 
+type StackedChartCard = {
+  type: "stacked";
+  title: string;
+  primaryLabel: string;
+  primaryValue: number;
+  secondaryLabel: string;
+  secondaryValue: number;
+};
+
+type BarChartCard = {
+  type: "bar";
+  title: string;
+  bars: Array<{ label: string; value: number; color: string }>;
+};
+
+type PieChartCard = {
+  type: "pie";
+  title: string;
+  segments: Array<{ label: string; value: number; color: string }>;
+};
+
+type ChartCard = StackedChartCard | BarChartCard | PieChartCard;
+
 export default function HomePage() {
-  const chartItems = [
+  const chartCards: ChartCard[] = [
     {
+      type: "stacked",
       title: "Habitação acessível",
       primaryLabel: "A favor",
       primaryValue: 62,
@@ -10,18 +34,22 @@ export default function HomePage() {
       secondaryValue: 38,
     },
     {
+      type: "bar",
       title: "Transporte público gratuito",
-      primaryLabel: "Sim",
-      primaryValue: 54,
-      secondaryLabel: "Não",
-      secondaryValue: 46,
+      bars: [
+        { label: "Sim", value: 54, color: "bg-[#fea076]" },
+        { label: "Não", value: 31, color: "bg-[#b67ee8]" },
+        { label: "Indecisos", value: 15, color: "bg-slate-300" },
+      ],
     },
     {
+      type: "pie",
       title: "Mais espaços verdes",
-      primaryLabel: "Prioridade alta",
-      primaryValue: 71,
-      secondaryLabel: "Outros temas",
-      secondaryValue: 29,
+      segments: [
+        { label: "Prioridade alta", value: 71, color: "#b67ee8" },
+        { label: "Prioridade média", value: 19, color: "#fea076" },
+        { label: "Outros temas", value: 10, color: "#cbd5f5" },
+      ],
     },
   ];
 
@@ -78,36 +106,95 @@ export default function HomePage() {
 
           {/* Grelha com três gráficos alinhados horizontalmente. */}
           <div className="grid gap-6 md:grid-cols-3">
-            {chartItems.map((item) => (
+            {chartCards.map((card) => (
               <article
                 className="rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
-                key={item.title}
+                key={card.title}
               >
                 {/* Título do tema da votação. */}
                 <h3 className="text-base font-semibold text-slate-900">
-                  {item.title}
+                  {card.title}
                 </h3>
-                {/* Área com legendas e barra horizontal com as duas cores. */}
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-medium text-slate-600">
-                    <span>{item.primaryLabel}</span>
-                    <span>{item.primaryValue}%</span>
+
+                {card.type === "stacked" ? (
+                  <div className="mt-4 space-y-3">
+                    {/* Linha com valores da opção principal. */}
+                    <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+                      <span>{card.primaryLabel}</span>
+                      <span>{card.primaryValue}%</span>
+                    </div>
+                    {/* Barra horizontal com percentagens empilhadas. */}
+                    <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full bg-[#fea076]"
+                        style={{ width: `${card.primaryValue}%` }}
+                      />
+                      <div
+                        className="h-full bg-[#b67ee8]"
+                        style={{ width: `${card.secondaryValue}%` }}
+                      />
+                    </div>
+                    {/* Linha com valores da opção secundária. */}
+                    <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+                      <span>{card.secondaryLabel}</span>
+                      <span>{card.secondaryValue}%</span>
+                    </div>
                   </div>
-                  <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
+                ) : null}
+
+                {card.type === "bar" ? (
+                  <div className="mt-4 space-y-3">
+                    {/* Gráfico de barras verticais com três opções. */}
+                    <div className="flex items-end gap-3">
+                      {card.bars.map((bar) => (
+                        <div key={bar.label} className="flex flex-1 flex-col items-center gap-2">
+                          <div className="relative h-28 w-full overflow-hidden rounded-lg bg-slate-100">
+                            <div
+                              className={`absolute bottom-0 left-0 w-full rounded-lg ${bar.color}`}
+                              style={{ height: `${bar.value}%` }}
+                            />
+                          </div>
+                          <span className="text-[0.65rem] font-medium text-slate-600">
+                            {bar.label} {bar.value}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {card.type === "pie" ? (
+                  <div className="mt-4 flex items-center gap-4">
+                    {/* Gráfico circular com conic-gradient para as percentagens. */}
                     <div
-                      className="h-full bg-[#fea076]"
-                      style={{ width: `${item.primaryValue}%` }}
+                      className="h-24 w-24 rounded-full"
+                      style={{
+                        background: `conic-gradient(${card.segments
+                          .map((segment, index) => {
+                            const offset = card.segments
+                              .slice(0, index)
+                              .reduce((total, value) => total + value.value, 0);
+                            return `${segment.color} ${offset}% ${offset + segment.value}%`;
+                          })
+                          .join(", ")})`,
+                      }}
                     />
-                    <div
-                      className="h-full bg-[#b67ee8]"
-                      style={{ width: `${item.secondaryValue}%` }}
-                    />
+                    {/* Lista com a legenda do gráfico circular. */}
+                    <ul className="space-y-2 text-xs font-medium text-slate-600">
+                      {card.segments.map((segment) => (
+                        <li key={segment.label} className="flex items-center gap-2">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: segment.color }}
+                          />
+                          <span>
+                            {segment.label} {segment.value}%
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="flex items-center justify-between text-xs font-medium text-slate-600">
-                    <span>{item.secondaryLabel}</span>
-                    <span>{item.secondaryValue}%</span>
-                  </div>
-                </div>
+                ) : null}
               </article>
             ))}
           </div>

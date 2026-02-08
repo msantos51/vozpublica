@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function EnterprisePage() {
   return (
     <section className="space-y-12">
@@ -21,12 +23,12 @@ export default function EnterprisePage() {
             </div>
             {/* Ações principais da página. */}
             <div className="flex flex-wrap gap-3">
-              <button
+              <Link
                 className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
-                type="button"
+                href="/contact"
               >
                 Falar connosco
-              </button>
+              </Link>
               <button
                 className="rounded-full border border-zinc-200 px-6 py-3 text-sm font-semibold text-zinc-700 transition hover:border-zinc-300"
                 type="button"
@@ -114,129 +116,6 @@ export default function EnterprisePage() {
                 </p>
               </article>
             </div>
-          </div>
-        </section>
-
-        {/* Processo resumido em quatro passos. */}
-        <section className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-zinc-900">Como funciona</h2>
-            <ol className="grid gap-4 md:grid-cols-2">
-              {[
-                {
-                  title: "Definição do objetivo",
-                  description:
-                    "Percebemos o que a marca quer testar ou compreender.",
-                },
-                {
-                  title: "Desenho do estudo",
-                  description:
-                    "Criamos as perguntas e a lógica do estudo, minimizando viés.",
-                },
-                {
-                  title: "Lançamento e recolha",
-                  description:
-                    "A poll é lançada na plataforma, integrada em contexto real de participação.",
-                },
-                {
-                  title: "Entrega de insights",
-                  description:
-                    "Resultados analisados, interpretados e apresentados de forma clara.",
-                },
-              ].map((step, index) => (
-                <li
-                  key={step.title}
-                  className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
-                    Passo {index + 1}
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-zinc-900">
-                    {step.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
-                    {step.description}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* Diferenciais de credibilidade. */}
-        <section className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-zinc-900">Porque funciona</h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
-                {/* Diferencial de dados reais. */}
-                <h3 className="text-lg font-semibold text-zinc-900">
-                  Dados reais, não painéis forçados
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
-                  As pessoas participam porque querem, não porque foram pagas.
-                </p>
-              </article>
-              <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
-                {/* Diferencial de menos viés. */}
-                <h3 className="text-lg font-semibold text-zinc-900">Menos viés</h3>
-                <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
-                  As marcas não são expostas ao público durante a recolha.
-                </p>
-              </article>
-              <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
-                {/* Diferencial de rapidez. */}
-                <h3 className="text-lg font-semibold text-zinc-900">Rapidez</h3>
-                <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
-                  Estudos podem ser lançados e analisados em poucos dias.
-                </p>
-              </article>
-              <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
-                {/* Diferencial de transparência. */}
-                <h3 className="text-lg font-semibold text-zinc-900">
-                  Transparência
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
-                  Metodologia clara e dados anónimos, em conformidade com RGPD.
-                </p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        {/* Exemplos de utilização. */}
-        <section className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-zinc-900">Casos de uso</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                "Testar perceção de um conceito ou ideia",
-                "Avaliar reação a um produto ou campanha",
-                "Medir tendências de consumo ou opinião",
-                "Comparar públicos ou segmentos",
-                "Apoiar decisões estratégicas",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl bg-[color:var(--surface)] p-5 text-sm text-justify text-zinc-700 shadow-[0_10px_30px_rgba(31,41,55,0.08)]"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Informação de ética e privacidade. */}
-        <section className="rounded-[32px] bg-[color:var(--surface)] p-6 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <div className="space-y-3">
-            <h2 className="text-2xl font-semibold text-zinc-900">
-              Ética &amp; privacidade
-            </h2>
-            <p className="text-sm leading-6 text-justify text-zinc-600">
-              Todos os estudos respeitam o RGPD. Os dados são anónimos, agregados
-              e utilizados exclusivamente para fins de análise.
-            </p>
           </div>
         </section>
 

@@ -60,10 +60,7 @@ export default function RootLayout({
           {/* Conteúdo principal renderizado por cada página. */}
           <main className="mx-auto w-full max-w-6xl px-6 pb-16">{children}</main>
 
-          {/* Rodapé com mensagem institucional. */}
-          <footer className="mx-auto w-full max-w-6xl px-6 pb-10 text-sm text-slate-400">
-            Construímos pontes entre cidadãos e instituições públicas.
-          </footer>
+          {/* Rodapé removido conforme pedido. */}
         </div>
       </body>
     </html>

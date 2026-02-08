@@ -63,18 +63,28 @@ export default function HomePage() {
             {/* Título principal da página com destaque de marca. */}
             <div>
               <p className="text-sm font-semibold text-[color:var(--primary)]">
-                Dá voz ao que pensas.
+                <span className="block">Dá voz ao que pensas.</span>
+                <span className="block">Vê o que os outros pensam.</span>
               </p>
               <h1 className="mt-2 text-[1.7rem] font-semibold text-justify text-slate-900">
-                A <span className="text-[#b67ee8]">Voz Pública</span> é um espaço
-                aberto onde qualquer pessoa pode participar, votar e acompanhar
-                a opinião coletiva sobre os temas que realmente importam.
+                <span className="block">
+                  A <span className="text-[#b67ee8]">Voz Pública</span> é um
+                  espaço aberto.
+                </span>
+                <span className="block">
+                  Aqui, qualquer pessoa pode participar, votar e acompanhar a
+                  opinião coletiva sobre os temas que realmente importam.
+                </span>
               </h1>
             </div>
             {/* Texto complementar sobre o painel. */}
             <p className="text-sm leading-6 text-justify text-slate-500">
               Escolhe os temas que queres acompanhar, partilha a tua opinião e
               ajuda a construir decisões mais claras e participativas.
+            </p>
+            {/* Linha curta com sinais de confiança da plataforma. */}
+            <p className="text-xs font-medium text-slate-500/80">
+              Votações anónimas • Resultados transparentes • Dados agregados
             </p>
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">
@@ -99,8 +109,8 @@ export default function HomePage() {
               Últimas Votações
             </h2>
             <p className="mt-2 text-sm text-justify text-slate-500">
-              Uma visão rápida das votações mais recentes com resultados
-              ilustrativos.
+              Uma visão rápida das votações mais recentes — e de como a opinião
+              coletiva evolui ao longo do tempo.
             </p>
           </div>
 
@@ -199,6 +209,16 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* Bloco discreto com ligação para a área Enterprise. */}
+        <div className="mt-10 flex justify-center">
+          <Link
+            className="text-xs font-medium text-slate-500 transition hover:text-[color:var(--primary)]"
+            href="/enterprise"
+          >
+            Para marcas e organizações → Enterprise
+          </Link>
+        </div>
       </div>
     </section>
   );

@@ -13,7 +13,7 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-[color:var(--primary)]">
                 Dá voz ao que pensas.
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+              <h1 className="mt-2 text-[1.7rem] font-semibold text-justify text-slate-900">
                 A Voz Pública é um espaço aberto onde qualquer pessoa pode
                 participar, votar e acompanhar a opinião coletiva sobre os
                 temas que realmente importam.

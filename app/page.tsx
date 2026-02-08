@@ -94,9 +94,12 @@ export default function HomePage() {
               >
                 Quero participar
               </Link>
-              <button className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300">
+              <Link
+                className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+                href="/votacoes"
+              >
                 Explorar votações
-              </button>
+              </Link>
             </div>
           </div>
         </article>

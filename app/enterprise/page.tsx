@@ -40,7 +40,7 @@ export default function EnterprisePage() {
         </header>
 
         {/* Segmentos que costumam trabalhar connosco. */}
-        <section className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+        <section className="soft-section-gradient rounded-[32px] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-6">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-zinc-900">
@@ -71,7 +71,7 @@ export default function EnterprisePage() {
         </section>
 
         {/* Serviços e entregáveis principais. */}
-        <section className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+        <section className="soft-section-gradient rounded-[32px] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-zinc-900">O que oferecemos</h2>
             <div className="grid gap-6 md:grid-cols-2">

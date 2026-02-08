@@ -42,10 +42,12 @@ export default function RootLayout({
         {/* Container geral que simula o layout com barra lateral e conteúdo central. */}
         <div className="min-h-screen bg-[color:var(--background)]">
           {/* Barra superior com navegação centrada e ações rápidas. */}
-          <header className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 pb-6 pt-8 md:flex-row md:items-center md:justify-between">
+          <header className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 pb-6 pt-8 md:flex-row md:items-center md:justify-between">
             {/* Marca do site alinhada à esquerda em todas as resoluções. */}
             <div className="flex items-center">
-              <span className="text-xl font-semibold text-slate-900">Voz Pública</span>
+              <span className="bg-gradient-to-r from-[#b67ee8] to-[#fea076] bg-clip-text text-xl font-semibold text-transparent">
+                Voz Pública
+              </span>
             </div>
             {/* Navegação principal com alinhamento centralizado em telas maiores. */}
             <div className="flex w-full justify-start md:w-auto md:flex-1 md:justify-center">
@@ -58,7 +60,7 @@ export default function RootLayout({
           </header>
 
           {/* Conteúdo principal renderizado por cada página. */}
-          <main className="mx-auto w-full max-w-6xl px-6 pb-16">{children}</main>
+          <main className="mx-auto w-full max-w-5xl px-6 pb-16">{children}</main>
 
           {/* Rodapé removido conforme pedido. */}
         </div>

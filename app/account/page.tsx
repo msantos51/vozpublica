@@ -17,8 +17,6 @@ type FeedbackState = {
   message: string;
 };
 
-const userStorageKey = "vp_user";
-
 export default function AccountPage() {
   const router = useRouter();
   const [formData, setFormData] = useState<UserProfile>({
@@ -29,37 +27,47 @@ export default function AccountPage() {
     password: "",
   });
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (field: keyof UserProfile, value: string) => {
     setFormData((previous) => ({ ...previous, [field]: value }));
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFeedback(null);
 
-    const normalizedEmail = formData.email.trim().toLowerCase();
-    const storedUser = localStorage.getItem(userStorageKey);
-    const storedProfile = storedUser ? (JSON.parse(storedUser) as UserProfile) : null;
-
-    if (storedProfile?.email?.trim().toLowerCase() === normalizedEmail) {
-      setFeedback({
-        type: "error",
-        message: "Já existe uma conta registada com este e-mail.",
-      });
+    // Evita múltiplos envios enquanto a requisição está em andamento.
+    if (isSubmitting) {
       return;
     }
 
-    // Guarda os dados do utilizador para permitir login posterior.
-    localStorage.setItem(
-      userStorageKey,
-      JSON.stringify({ ...formData, email: normalizedEmail })
-    );
-    setFeedback({
-      type: "success",
-      message: "Conta criada com sucesso! Pode iniciar sessão.",
-    });
-    router.push("/login");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = (await response.json()) as { message: string };
+
+      if (!response.ok) {
+        setFeedback({ type: "error", message: data.message });
+        return;
+      }
+
+      setFeedback({ type: "success", message: data.message });
+      router.push("/login");
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: "Não foi possível criar a conta. Tente novamente.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -168,7 +176,7 @@ export default function AccountPage() {
                   className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
                   type="submit"
                 >
-                  Criar conta
+                  {isSubmitting ? "A criar..." : "Criar conta"}
                 </button>
                 <Link className="text-sm font-semibold text-slate-500" href="/login">
                   Já tenho conta

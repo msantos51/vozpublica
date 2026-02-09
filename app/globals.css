@@ -31,10 +31,9 @@ body {
 }
 
 
-/* Aplica um gradiente suave de marca para fundos de secções em destaque. */
+/* Mantém o fundo das secções em destaque sem gradiente. */
 .soft-section-gradient {
-  background: linear-gradient(135deg, rgba(254, 160, 118, 0.16), rgba(182, 126, 232, 0.16));
-
+  background: var(--surface);
 }
 
 /* Define o cartão principal com sombra e alinhamento central. */

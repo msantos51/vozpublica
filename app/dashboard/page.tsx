@@ -8,6 +8,9 @@ type UserProfile = {
   email: string;
   city: string;
   interest: string;
+};
+
+type UserFormState = UserProfile & {
   password: string;
 };
 
@@ -16,37 +19,70 @@ type UserPreferences = {
   allowNotifications: boolean;
 };
 
-const userStorageKey = "vp_user";
+type ProfileResponse = {
+  user?: {
+    fullName: string;
+    email: string;
+    city: string | null;
+    interest: string | null;
+  };
+  message?: string;
+};
+
+type UpdateResponse = {
+  message: string;
+};
+
 const sessionStorageKey = "vp_session";
 const preferencesStorageKey = "vp_preferences";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserFormState | null>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences>({
     receiveNewsletter: true,
     allowNotifications: true,
   });
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     // Garante que apenas utilizadores autenticados acedem ao dashboard.
     const storedSession = localStorage.getItem(sessionStorageKey);
-    const storedUser = localStorage.getItem(userStorageKey);
 
-    if (!storedSession || !storedUser) {
+    if (!storedSession) {
       router.push("/login");
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser) as UserProfile;
+    setSessionEmail(storedSession);
 
-    if (parsedUser.email !== storedSession) {
-      router.push("/login");
-      return;
-    }
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(
+          `/api/user?email=${encodeURIComponent(storedSession)}`
+        );
+        const data = (await response.json()) as ProfileResponse;
 
-    setProfile(parsedUser);
+        if (!response.ok || !data.user) {
+          router.push("/login");
+          return;
+        }
+
+        setProfile({
+          fullName: data.user.fullName,
+          email: data.user.email,
+          city: data.user.city ?? "",
+          interest: data.user.interest ?? "",
+          password: "",
+        });
+      } catch (error) {
+        router.push("/login");
+      }
+    };
+
+    loadProfile();
 
     const storedPreferences = localStorage.getItem(preferencesStorageKey);
     if (storedPreferences) {
@@ -54,7 +90,7 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const handleProfileChange = (field: keyof UserProfile, value: string) => {
+  const handleProfileChange = (field: keyof UserFormState, value: string) => {
     if (!profile) {
       return;
     }
@@ -66,15 +102,48 @@ export default function DashboardPage() {
     setPreferences((previous) => ({ ...previous, [field]: !previous[field] }));
   };
 
-  const handleSave = () => {
-    if (!profile) {
+  const handleSave = async () => {
+    if (!profile || !sessionEmail || isSaving) {
       return;
     }
 
-    // Atualiza os dados do utilizador e as preferências no armazenamento local.
-    localStorage.setItem(userStorageKey, JSON.stringify(profile));
-    localStorage.setItem(preferencesStorageKey, JSON.stringify(preferences));
-    setFeedback("Alterações guardadas com sucesso.");
+    setIsSaving(true);
+    setFeedback(null);
+
+    try {
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentEmail: sessionEmail,
+          email: profile.email,
+          fullName: profile.fullName,
+          city: profile.city,
+          interest: profile.interest,
+          password: profile.password ? profile.password : undefined,
+        }),
+      });
+
+      const data = (await response.json()) as UpdateResponse;
+
+      if (!response.ok) {
+        setFeedback(data.message);
+        return;
+      }
+
+      // Atualiza as preferências no armazenamento local.
+      localStorage.setItem(preferencesStorageKey, JSON.stringify(preferences));
+      setProfile({ ...profile, password: "" });
+      if (sessionEmail !== profile.email) {
+        localStorage.setItem(sessionStorageKey, profile.email);
+        setSessionEmail(profile.email);
+      }
+      setFeedback(data.message);
+    } catch (error) {
+      setFeedback("Não foi possível guardar as alterações. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogout = () => {
@@ -180,7 +249,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={handleSave}
                 >
-                  Guardar alterações
+                  {isSaving ? "A guardar..." : "Guardar alterações"}
                 </button>
                 <button
                   className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"

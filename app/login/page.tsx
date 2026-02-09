@@ -4,15 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type UserProfile = {
-  fullName: string;
-  email: string;
-  city: string;
-  interest: string;
-  password: string;
+type LoginResponse = {
+  message: string;
+  user?: {
+    fullName: string;
+    email: string;
+    city: string | null;
+    interest: string | null;
+  };
 };
 
-const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 
 export default function LoginPage() {
@@ -20,28 +21,43 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFeedback(null);
 
-    // Valida se existe uma conta gravada e confere as credenciais.
-    const storedUser = localStorage.getItem(userStorageKey);
-
-    if (!storedUser) {
-      setFeedback("Ainda não existe uma conta criada com este e-mail.");
+    // Evita múltiplos envios enquanto a requisição está em andamento.
+    if (isSubmitting) {
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser) as UserProfile;
+    setIsSubmitting(true);
 
-    if (parsedUser.email !== email || parsedUser.password !== password) {
-      setFeedback("E-mail ou senha inválidos. Verifique os dados e tente novamente.");
-      return;
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = (await response.json()) as LoginResponse;
+
+      if (!response.ok) {
+        setFeedback(data.message);
+        return;
+      }
+
+      if (data.user?.email) {
+        localStorage.setItem(sessionStorageKey, data.user.email);
+      }
+
+      router.push("/dashboard");
+    } catch (error) {
+      setFeedback("Não foi possível iniciar sessão. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    localStorage.setItem(sessionStorageKey, parsedUser.email);
-    router.push("/dashboard");
   };
 
   return (
@@ -108,7 +124,7 @@ export default function LoginPage() {
                   className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
                   type="submit"
                 >
-                  Entrar
+                  {isSubmitting ? "A entrar..." : "Entrar"}
                 </button>
                 <Link className="text-sm font-semibold text-slate-500" href="/account">
                   Criar conta

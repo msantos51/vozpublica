@@ -77,7 +77,7 @@ export default function AccountPage() {
         {/* Cabeçalho introdutório da página de criação de conta. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-slate-900">Conta</h1>
+            <h1 className="page-title">Conta</h1>
             <p className="text-base leading-7 text-justify text-slate-500">
               Crie o seu perfil para acompanhar iniciativas e participar nas
               discussões da comunidade.
@@ -90,10 +90,8 @@ export default function AccountPage() {
           <div className="flex flex-col gap-6">
             {/* Texto de apoio com contexto sobre o cadastro. */}
             <div>
-              <p className="text-sm font-semibold text-[color:var(--primary)]">
-                Criar conta
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+              <p className="section-label">Criar conta</p>
+              <h2 className="mt-2 section-title">
                 Participe da comunidade com o seu perfil.
               </h2>
               <p className="mt-2 text-sm text-justify text-slate-500">

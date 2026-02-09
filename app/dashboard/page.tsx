@@ -163,7 +163,7 @@ export default function DashboardPage() {
         {/* Cabeçalho com o título do dashboard dentro de um cartão. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
+            <h1 className="page-title">Dashboard</h1>
             <p className="text-base leading-7 text-justify text-slate-500">
               Atualize os seus dados pessoais e ajuste as preferências da sua conta.
             </p>
@@ -175,12 +175,8 @@ export default function DashboardPage() {
           <article className="rounded-[32px] bg-white p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
             <div className="flex flex-col gap-6">
               <div>
-                <p className="text-sm font-semibold text-[color:var(--primary)]">
-                  Perfil
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                  Informações pessoais
-                </h2>
+                <p className="section-label">Perfil</p>
+                <h2 className="mt-2 section-title">Informações pessoais</h2>
                 <p className="mt-2 text-sm text-justify text-slate-500">
                   Mantenha os seus dados atualizados para uma experiência mais personalizada.
                 </p>
@@ -265,7 +261,7 @@ export default function DashboardPage() {
           {/* Painel lateral com funções básicas da conta. */}
           <aside className="space-y-6">
             <div className="rounded-[32px] bg-white p-6 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-              <h3 className="text-lg font-semibold text-slate-900">Preferências</h3>
+              <h3 className="card-title">Preferências</h3>
               <p className="mt-2 text-sm text-justify text-slate-500">
                 Ajuste as opções essenciais para receber comunicações.
               </p>
@@ -292,7 +288,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="rounded-[32px] bg-[color:var(--surface)] p-6 text-sm text-slate-600 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-              <p className="font-semibold text-slate-900">Dicas rápidas</p>
+              <p className="font-semibold text-[color:var(--foreground)]">
+                Dicas rápidas
+              </p>
               <ul className="mt-3 space-y-2 text-justify">
                 <li>Atualize o perfil sempre que mudar de cidade.</li>
                 <li>Ative as notificações para receber novidades.</li>

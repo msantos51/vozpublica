@@ -62,11 +62,9 @@ export default function HomePage() {
           <div className="flex flex-col gap-6">
             {/* Título principal da página com destaque de marca. */}
             <div>
-
-              <p className="text-lg font-semibold text-justify text-slate-900">
+              <h1 className="page-title text-justify">
                 Dá voz ao que pensas. Vê o que os outros pensam.
-              </p>
-
+              </h1>
             </div>
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">
@@ -90,9 +88,7 @@ export default function HomePage() {
         <section className="mt-10 space-y-6">
           {/* Cabeçalho da secção com título e breve descrição. */}
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">
-              Últimas Votações
-            </h2>
+            <h2 className="section-title">Últimas Votações</h2>
             <p className="mt-2 text-sm text-justify text-slate-500">
               Uma visão rápida das votações mais recentes — e de como a opinião
               coletiva evolui ao longo do tempo.
@@ -107,9 +103,7 @@ export default function HomePage() {
                 key={card.title}
               >
                 {/* Título do tema da votação. */}
-                <h3 className="text-base font-semibold text-slate-900">
-                  {card.title}
-                </h3>
+                <h3 className="subsection-title">{card.title}</h3>
 
                 {card.type === "stacked" ? (
                   <div className="mt-4 space-y-3">

@@ -63,8 +63,7 @@ export default function HomePage() {
             {/* Título principal da página com destaque de marca. */}
             <div>
               <p className="text-sm font-semibold text-[color:var(--primary)]">
-                <span className="block">Dá voz ao que pensas.</span>
-                <span className="block">Vê o que os outros pensam.</span>
+                <span>Dá voz ao que pensas. Vê o que os outros pensam.</span>
               </p>
               <h1 className="mt-2 text-[1.45rem] font-semibold text-justify text-slate-900">
                 <span className="block">
@@ -77,15 +76,6 @@ export default function HomePage() {
                 </span>
               </h1>
             </div>
-            {/* Texto complementar sobre o painel. */}
-            <p className="text-sm leading-6 text-justify text-slate-500">
-              Escolhe os temas que queres acompanhar, partilha a tua opinião e
-              ajuda a construir decisões mais claras e participativas.
-            </p>
-            {/* Linha curta com sinais de confiança da plataforma. */}
-            <p className="text-xs font-medium text-slate-500/80">
-              Votações anónimas • Resultados transparentes • Dados agregados
-            </p>
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">
               <Link

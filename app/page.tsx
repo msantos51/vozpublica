@@ -62,9 +62,11 @@ export default function HomePage() {
           <div className="flex flex-col gap-6">
             {/* Título principal da página com destaque de marca. */}
             <div>
+
               <p className="text-lg font-semibold text-justify text-slate-900">
                 Dá voz ao que pensas. Vê o que os outros pensam.
               </p>
+
             </div>
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">

@@ -8,10 +8,8 @@ export default function ContactPage() {
           <div className="flex flex-col gap-6">
             {/* Título e instruções do formulário de contato. */}
             <div>
-              <p className="text-sm font-semibold text-[color:var(--primary)]">
-                Formulário de contacto
-              </p>
-              <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+              <p className="section-label">Formulário de contacto</p>
+              <h1 className="mt-2 page-title">
                 Envie a sua mensagem para a equipa.
               </h1>
               <p className="mt-2 text-sm text-justify text-slate-500">

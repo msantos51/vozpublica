@@ -47,7 +47,7 @@ export default function RootLayout({
 
             {/* Marca do site alinhada à esquerda em todas as resoluções. */}
             <div className="flex items-center">
-              <span className="bg-gradient-to-r from-[#b67ee8] to-[#fea076] bg-clip-text text-xl font-semibold text-transparent">
+              <span className="bg-gradient-to-r from-[#b67ee8] to-[#fea076] bg-clip-text text-2xl font-semibold text-transparent">
                 Voz Pública
               </span>
             </div>

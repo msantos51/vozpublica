@@ -67,7 +67,7 @@ export default function LoginPage() {
         {/* Cabeçalho introdutório da página de login. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-slate-900">Login</h1>
+            <h1 className="page-title">Login</h1>
             <p className="text-base leading-7 text-justify text-slate-500">
               Aceda à sua conta para gerir o perfil e acompanhar as iniciativas.
             </p>
@@ -79,12 +79,8 @@ export default function LoginPage() {
           <div className="flex flex-col gap-6">
             {/* Texto de apoio com instruções rápidas. */}
             <div>
-              <p className="text-sm font-semibold text-[color:var(--primary)]">
-                Entrar
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                Bem-vindo de volta.
-              </h2>
+              <p className="section-label">Entrar</p>
+              <h2 className="mt-2 section-title">Bem-vindo de volta.</h2>
               <p className="mt-2 text-sm text-justify text-slate-500">
                 Utilize o e-mail e a senha registados para continuar.
               </p>

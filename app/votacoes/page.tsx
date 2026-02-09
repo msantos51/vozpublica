@@ -260,10 +260,8 @@ export default function VotacoesPage() {
         {/* Cabeçalho com resumo da experiência de votações. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
-              Participação ativa
-            </p>
-            <h1 className="text-3xl font-semibold text-zinc-900">Votações</h1>
+            <p className="section-label-uppercase">Participação ativa</p>
+            <h1 className="page-title">Votações</h1>
             <p className="text-base leading-7 text-justify text-zinc-600">
               Acompanhe as consultas públicas em aberto, participe nas decisões
               locais e veja como a sua escolha impacta o planeamento urbano.
@@ -279,16 +277,14 @@ export default function VotacoesPage() {
               <div className="blob" />
               <div className="card-content space-y-4">
                 <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-zinc-900">
-                    {voting.title}
-                  </h2>
+                  <h2 className="card-title">{voting.title}</h2>
                   <p className="text-sm leading-6 text-justify text-zinc-600">
                     {voting.description}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                  <span className="rounded-full bg-[color:var(--primary-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--primary)]">
                     {voting.status}
                   </span>
                   <span className="text-xs font-medium text-zinc-500">
@@ -300,7 +296,7 @@ export default function VotacoesPage() {
                   <button
                     type="button"
                     onClick={handleParticipationToggle}
-                    className="w-full rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
+                    className="w-full rounded-full border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] px-4 py-2 text-sm font-semibold text-[color:var(--primary)] transition hover:brightness-95"
                   >
                     {isParticipationOpen
                       ? "Fechar votação"
@@ -323,15 +319,11 @@ export default function VotacoesPage() {
         </div>
 
         {/* Bloco interativo para recolher dados da votação aberta. */}
-        <section className="rounded-[32px] border border-orange-100 bg-white p-8 shadow-[0_15px_35px_rgba(249,115,22,0.12)]">
+        <section className="rounded-[32px] border border-[color:var(--primary-soft)] bg-white p-8 shadow-[0_15px_35px_rgba(182,126,232,0.12)]">
           <div className="space-y-6">
             <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
-                Orçamento participativo 2024
-              </p>
-              <h2 className="text-2xl font-semibold text-zinc-900">
-                {votingQuestion.prompt}
-              </h2>
+              <p className="section-label-uppercase">Orçamento participativo 2024</p>
+              <h2 className="section-title">{votingQuestion.prompt}</h2>
               <p className="text-sm text-zinc-600">
                 Participação disponível apenas para utilizadores com login
                 efetuado.
@@ -342,17 +334,17 @@ export default function VotacoesPage() {
               <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-4 rounded-2xl border border-orange-100 bg-orange-50/40 p-6"
+                  className="space-y-4 rounded-2xl border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-6"
                 >
                   <fieldset className="space-y-3">
-                    <legend className="text-base font-semibold text-zinc-900">
+                    <legend className="subsection-title">
                       Selecione uma prioridade
                     </legend>
 
                     {votingQuestion.options.map((option) => (
                       <label
                         key={option}
-                        className="flex items-center gap-3 rounded-xl border border-orange-100 bg-white p-3 text-sm text-zinc-700 shadow-sm"
+                        className="flex items-center gap-3 rounded-xl border border-[color:var(--primary-soft)] bg-white p-3 text-sm text-zinc-700 shadow-sm"
                       >
                         <input
                           type="radio"
@@ -361,7 +353,7 @@ export default function VotacoesPage() {
                           checked={selectedOption === option}
                           onChange={() => setSelectedOption(option)}
                           disabled={!canParticipate || isFormLocked}
-                          className="h-4 w-4 text-orange-500"
+                          className="h-4 w-4 text-[color:var(--primary)]"
                         />
                         <span>{option}</span>
                       </label>
@@ -371,7 +363,7 @@ export default function VotacoesPage() {
                   <button
                     type="submit"
                     disabled={!canParticipate || isFormLocked}
-                    className="w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
+                    className="w-full rounded-full bg-[color:var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:bg-[color:var(--primary-soft)]"
                   >
                     {isFormLocked ? "Resposta submetida" : "Registar resposta"}
                   </button>
@@ -383,7 +375,7 @@ export default function VotacoesPage() {
                   ) : null}
 
                   {!canParticipate ? (
-                    <p className="text-sm text-orange-700">
+                    <p className="text-sm text-[color:var(--primary)]">
                       É necessário ter login ativo para votar.
                     </p>
                   ) : null}
@@ -395,13 +387,11 @@ export default function VotacoesPage() {
                   ) : null}
                 </form>
 
-                <div className="space-y-4 rounded-2xl border border-orange-100 bg-white p-6">
+                <div className="space-y-4 rounded-2xl border border-[color:var(--primary-soft)] bg-white p-6">
                   {hasSubmitted ? (
                     <>
                       <div className="space-y-1">
-                        <h3 className="text-base font-semibold text-zinc-900">
-                          Resultado parcial
-                        </h3>
+                        <h3 className="subsection-title">Resultado parcial</h3>
                         <p className="text-sm text-zinc-500">
                           {totalResponses} respostas registadas
                         </p>
@@ -416,9 +406,9 @@ export default function VotacoesPage() {
                                 {item.percentage}% ({item.count})
                               </span>
                             </div>
-                            <div className="h-2 w-full rounded-full bg-orange-100">
+                            <div className="h-2 w-full rounded-full bg-[color:var(--primary-soft)]">
                               <div
-                                className="h-2 rounded-full bg-orange-500"
+                                className="h-2 rounded-full bg-[color:var(--primary)]"
                                 style={{ width: `${item.percentage}%` }}
                               />
                             </div>
@@ -427,14 +417,14 @@ export default function VotacoesPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-4 text-sm text-orange-700">
+                    <div className="rounded-2xl border border-dashed border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4 text-sm text-[color:var(--primary)]">
                       Submeta a sua resposta para ver os resultados atuais.
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 p-4 text-sm text-orange-700">
+              <p className="rounded-2xl border border-dashed border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4 text-sm text-[color:var(--primary)]">
                 Clique no botão "Participar (Aberta)" para responder e acompanhar
                 o gráfico de resultados.
               </p>
@@ -442,15 +432,13 @@ export default function VotacoesPage() {
           </div>
         </section>
 
-        <div className="rounded-[32px] border border-orange-100 bg-white p-8 shadow-[0_15px_35px_rgba(249,115,22,0.12)]">
+        <div className="rounded-[32px] border border-[color:var(--primary-soft)] bg-white p-8 shadow-[0_15px_35px_rgba(182,126,232,0.12)]">
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-zinc-900">
-              Como participar
-            </h2>
+            <h2 className="section-title">Como participar</h2>
             <div className="grid gap-6 md:grid-cols-3">
               {votingSteps.map((step) => (
                 <div key={step.title} className="space-y-2">
-                  <h3 className="text-base font-semibold text-orange-700">
+                  <h3 className="subsection-title text-[color:var(--primary)]">
                     {step.title}
                   </h3>
                   <p className="text-sm leading-6 text-justify text-zinc-600">

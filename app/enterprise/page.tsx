@@ -9,10 +9,8 @@ export default function EnterprisePage() {
         <header className="soft-section-gradient rounded-[32px] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
             <div className="space-y-4">
-              <p className="text-sm font-semibold text-[color:var(--primary)]">
-                Página Enterprise
-              </p>
-              <h1 className="text-3xl font-semibold text-zinc-900">
+              <p className="section-label">Página Enterprise</p>
+              <h1 className="page-title">
                 Insights reais a partir da opinião das pessoas.
               </h1>
               <p className="text-base leading-7 text-justify text-zinc-600">
@@ -43,9 +41,7 @@ export default function EnterprisePage() {
         <section className="soft-section-gradient rounded-[32px] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-6">
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-zinc-900">
-                Quem trabalha connosco
-              </h2>
+              <h2 className="section-title">Quem trabalha connosco</h2>
               <p className="text-sm leading-6 text-justify text-zinc-600">
                 Ajudamos equipas que procuram decisões baseadas em dados, com
                 rapidez e credibilidade.
@@ -73,11 +69,11 @@ export default function EnterprisePage() {
         {/* Serviços e entregáveis principais. */}
         <section className="soft-section-gradient rounded-[32px] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-zinc-900">O que oferecemos</h2>
+            <h2 className="section-title">O que oferecemos</h2>
             <div className="grid gap-6 md:grid-cols-2">
               <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
                 {/* Serviço de estudos personalizados. */}
-                <h3 className="text-lg font-semibold text-zinc-900">
+                <h3 className="card-title">
                   Estudos de opinião personalizados
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
@@ -87,7 +83,7 @@ export default function EnterprisePage() {
               </article>
               <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
                 {/* Serviço de segmentação detalhada. */}
-                <h3 className="text-lg font-semibold text-zinc-900">
+                <h3 className="card-title">
                   Segmentação de público
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
@@ -97,7 +93,7 @@ export default function EnterprisePage() {
               </article>
               <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
                 {/* Serviço de análise e interpretação. */}
-                <h3 className="text-lg font-semibold text-zinc-900">
+                <h3 className="card-title">
                   Análise e interpretação
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
@@ -107,7 +103,7 @@ export default function EnterprisePage() {
               </article>
               <article className="rounded-2xl bg-[color:var(--surface)] p-6 shadow-[0_10px_30px_rgba(31,41,55,0.08)]">
                 {/* Serviço de relatórios e dashboards. */}
-                <h3 className="text-lg font-semibold text-zinc-900">
+                <h3 className="card-title">
                   Relatórios e dashboards
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-justify text-zinc-600">
@@ -123,7 +119,7 @@ export default function EnterprisePage() {
         <section className="rounded-[32px] bg-slate-900 px-8 py-10 text-white shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold">Vamos falar?</h2>
+              <h2 className="section-title-inverse">Vamos falar?</h2>
               <p className="max-w-xl text-sm leading-6 text-justify text-slate-200">
                 Se pretende realizar um estudo de opinião ou explorar insights
                 sobre um público específico, fale connosco.

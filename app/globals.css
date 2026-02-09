@@ -6,7 +6,7 @@
   --surface: #ffffff;
   --surface-muted: #f2f3f8;
   --primary: #b67ee8;
-  --primary-soft: #b67ee8;
+  --primary-soft: #f3eafc;
   --accent: #b67ee8;
   color-scheme: light;
 }
@@ -28,6 +28,40 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+@layer components {
+  /* Define estilos consistentes para títulos e subtítulos em todo o site. */
+  .page-title {
+    @apply text-3xl font-semibold text-[color:var(--foreground)];
+  }
+
+  .section-title {
+    @apply text-2xl font-semibold text-[color:var(--foreground)];
+  }
+
+  /* Define o título para secções em fundos escuros mantendo a legibilidade. */
+  .section-title-inverse {
+    @apply text-2xl font-semibold text-white;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold text-[color:var(--foreground)];
+  }
+
+  .subsection-title {
+    @apply text-base font-semibold text-[color:var(--foreground)];
+  }
+
+  /* Define o texto auxiliar com a cor primária para destacar secções. */
+  .section-label {
+    @apply text-sm font-semibold text-[color:var(--primary)];
+  }
+
+  /* Define o texto auxiliar em maiúsculas para chamadas de destaque. */
+  .section-label-uppercase {
+    @apply text-sm font-semibold uppercase tracking-[0.3em] text-[color:var(--primary)];
+  }
 }
 
 

@@ -62,19 +62,11 @@ export default function HomePage() {
           <div className="flex flex-col gap-6">
             {/* Título principal da página com destaque de marca. */}
             <div>
-              <p className="text-sm font-semibold text-[color:var(--primary)]">
-                <span>Dá voz ao que pensas. </span>
-                <span className="text-[#fea076]">Vê o que os outros pensam.</span>
+
+              <p className="text-lg font-semibold text-justify text-slate-900">
+                Dá voz ao que pensas. Vê o que os outros pensam.
               </p>
-              <h1 className="mt-2 text-[1.45rem] font-semibold text-justify text-slate-900">
-                <span className="block">
-                  A <span>Voz Pública</span> é um espaço aberto.
-                </span>
-                <span className="block">
-                  Aqui, qualquer pessoa pode participar, votar e acompanhar a
-                  opinião coletiva sobre os temas que realmente importam.
-                </span>
-              </h1>
+
             </div>
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">

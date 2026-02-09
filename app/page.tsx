@@ -63,12 +63,12 @@ export default function HomePage() {
             {/* Título principal da página com destaque de marca. */}
             <div>
               <p className="text-sm font-semibold text-[color:var(--primary)]">
-                <span>Dá voz ao que pensas. Vê o que os outros pensam.</span>
+                <span>Dá voz ao que pensas. </span>
+                <span className="text-[#fea076]">Vê o que os outros pensam.</span>
               </p>
               <h1 className="mt-2 text-[1.45rem] font-semibold text-justify text-slate-900">
                 <span className="block">
-                  A <span className="text-[#b67ee8]">Voz Pública</span> é um
-                  espaço aberto.
+                  A <span>Voz Pública</span> é um espaço aberto.
                 </span>
                 <span className="block">
                   Aqui, qualquer pessoa pode participar, votar e acompanhar a

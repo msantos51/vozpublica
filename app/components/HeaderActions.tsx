@@ -3,19 +3,18 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-type UserProfile = {
+type SessionUser = {
   fullName: string;
   email: string;
   city: string;
   interest: string;
-  password: string;
 };
 
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 
 export default function HeaderActions() {
-  const [sessionUser, setSessionUser] = useState<UserProfile | null>(null);
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
   const profileInitials = useMemo(() => {
     if (!sessionUser?.fullName) {
@@ -42,14 +41,18 @@ export default function HeaderActions() {
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser) as UserProfile;
+    try {
+      const parsedUser = JSON.parse(storedUser) as SessionUser;
 
-    if (parsedUser.email !== storedSession) {
+      if (parsedUser.email !== storedSession) {
+        setSessionUser(null);
+        return;
+      }
+
+      setSessionUser(parsedUser);
+    } catch (error) {
       setSessionUser(null);
-      return;
     }
-
-    setSessionUser(parsedUser);
   }, []);
 
   return (

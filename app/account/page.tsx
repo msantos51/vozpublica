@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type UserProfile = {
+type RegisterForm = {
   fullName: string;
   email: string;
   city: string;
   interest: string;
   password: string;
+  confirmPassword: string;
 };
 
 type FeedbackState = {
@@ -19,17 +20,18 @@ type FeedbackState = {
 
 export default function AccountPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState<UserProfile>({
+  const [formData, setFormData] = useState<RegisterForm>({
     fullName: "",
     email: "",
     city: "",
     interest: "",
     password: "",
+    confirmPassword: "",
   });
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (field: keyof UserProfile, value: string) => {
+  const handleChange = (field: keyof RegisterForm, value: string) => {
     setFormData((previous) => ({ ...previous, [field]: value }));
   };
 
@@ -39,6 +41,14 @@ export default function AccountPage() {
 
     // Evita múltiplos envios enquanto a requisição está em andamento.
     if (isSubmitting) {
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setFeedback({
+        type: "error",
+        message: "A confirmação da senha não coincide com a senha informada.",
+      });
       return;
     }
 
@@ -132,6 +142,17 @@ export default function AccountPage() {
                   type="password"
                   value={formData.password}
                   onChange={(event) => handleChange("password", event.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Confirmar senha
+                <input
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
+                  name="confirmPassword"
+                  placeholder="Repita a senha"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(event) => handleChange("confirmPassword", event.target.value)}
                 />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">

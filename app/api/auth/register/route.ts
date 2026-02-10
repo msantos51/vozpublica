@@ -9,6 +9,7 @@ type RegisterPayload = {
   city: string;
   interest: string;
   password: string;
+  confirmPassword: string;
 };
 
 type UserRow = {
@@ -24,9 +25,16 @@ export const POST = async (request: Request) => {
   // Lê o corpo da requisição para criar o novo utilizador.
   const payload = (await request.json()) as RegisterPayload;
 
-  if (!payload.fullName || !payload.email || !payload.password) {
+  if (!payload.fullName || !payload.email || !payload.password || !payload.confirmPassword) {
     return NextResponse.json(
-      { message: "Preencha o nome, e-mail e senha para continuar." },
+      { message: "Preencha o nome, e-mail, senha e confirmação para continuar." },
+      { status: 400 }
+    );
+  }
+
+  if (payload.password !== payload.confirmPassword) {
+    return NextResponse.json(
+      { message: "A confirmação da senha deve ser igual à senha informada." },
       { status: 400 }
     );
   }

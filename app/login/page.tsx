@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type LoginResponse = {
   message: string;
@@ -14,6 +14,14 @@ type LoginResponse = {
   };
 };
 
+type SessionUser = {
+  fullName: string;
+  email: string;
+  city: string;
+  interest: string;
+};
+
+const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 
 export default function LoginPage() {
@@ -22,6 +30,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    // Mantém o utilizador autenticado ao regressar ao ecrã de login.
+    const storedSession = localStorage.getItem(sessionStorageKey);
+    const storedUser = localStorage.getItem(userStorageKey);
+
+    if (storedSession && storedUser) {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,7 +67,15 @@ export default function LoginPage() {
       }
 
       if (data.user?.email) {
-        localStorage.setItem(sessionStorageKey, data.user.email);
+        const normalizedSessionUser: SessionUser = {
+          fullName: data.user.fullName,
+          email: data.user.email,
+          city: data.user.city ?? "",
+          interest: data.user.interest ?? "",
+        };
+
+        localStorage.setItem(sessionStorageKey, normalizedSessionUser.email);
+        localStorage.setItem(userStorageKey, JSON.stringify(normalizedSessionUser));
       }
 
       router.push("/dashboard");

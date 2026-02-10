@@ -296,7 +296,7 @@ export default function VotacoesPage() {
                   <button
                     type="button"
                     onClick={handleParticipationToggle}
-                    className="w-full rounded-full border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] px-4 py-2 text-sm font-semibold text-[color:var(--primary)] transition hover:brightness-95"
+                    className="button-size-login w-full border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] transition hover:brightness-95"
                   >
                     {isParticipationOpen
                       ? "Fechar votação"
@@ -308,7 +308,7 @@ export default function VotacoesPage() {
                   <button
                     type="button"
                     disabled
-                    className="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-400"
+                    className="button-size-login w-full cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400"
                   >
                     Participação indisponível
                   </button>
@@ -363,7 +363,7 @@ export default function VotacoesPage() {
                   <button
                     type="submit"
                     disabled={!canParticipate || isFormLocked}
-                    className="w-full rounded-full bg-[color:var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:bg-[color:var(--primary-soft)]"
+                    className="button-size-login w-full bg-[color:var(--primary)] text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:bg-[color:var(--primary-soft)]"
                   >
                     {isFormLocked ? "Resposta submetida" : "Registar resposta"}
                   </button>

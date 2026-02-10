@@ -57,7 +57,7 @@ export default function HeaderActions() {
       {/* Botão de login exibido apenas quando não há sessão ativa. */}
       {!sessionUser && (
         <Link
-          className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+          className="button-size-login border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
           href="/login"
         >
           Login

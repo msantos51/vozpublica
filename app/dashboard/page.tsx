@@ -241,14 +241,14 @@ export default function DashboardPage() {
               )}
               <div className="flex flex-wrap items-center gap-3">
                 <button
-                  className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                  className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
                   type="button"
                   onClick={handleSave}
                 >
                   {isSaving ? "A guardar..." : "Guardar alterações"}
                 </button>
                 <button
-                  className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+                  className="button-size-login border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
                   type="button"
                   onClick={handleLogout}
                 >

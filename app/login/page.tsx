@@ -117,7 +117,7 @@ export default function LoginPage() {
               {/* Ações principais do formulário. */}
               <div className="flex flex-wrap items-center gap-3 md:col-span-2">
                 <button
-                  className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                  className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
                   type="submit"
                 >
                   {isSubmitting ? "A entrar..." : "Entrar"}

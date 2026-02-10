@@ -69,13 +69,13 @@ export default function HomePage() {
             {/* Área de ações e cartões auxiliares. */}
             <div className="flex flex-wrap items-center gap-4">
               <Link
-                className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
                 href="/about"
               >
                 Quero participar
               </Link>
               <Link
-                className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+                className="button-size-login border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
                 href="/votacoes"
               >
                 Explorar votações

@@ -6,8 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 type SessionUser = {
   fullName: string;
   email: string;
-  city: string;
-  interest: string;
 };
 
 const userStorageKey = "vp_user";
@@ -57,7 +55,6 @@ export default function HeaderActions() {
 
   return (
     <div className="flex items-center gap-4">
-      {/* Botão de login exibido apenas quando não há sessão ativa. */}
       {!sessionUser && (
         <Link
           className="button-size-login border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
@@ -66,7 +63,6 @@ export default function HeaderActions() {
           Login
         </Link>
       )}
-      {/* Perfil exibido apenas quando existe sessão ativa. */}
       {sessionUser && (
         <Link
           className="flex items-center gap-3 rounded-full bg-[color:var(--surface)] px-4 py-2 shadow-sm"

@@ -1,13 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type UserProfile = {
+  firstName: string;
+  lastName: string;
   fullName: string;
   email: string;
+  birthDate: string;
   city: string;
-  interest: string;
+  gender: string;
+  educationLevel: string;
+  profileCompleted: boolean;
 };
 
 type UserPreferences = {
@@ -23,10 +28,15 @@ type PasswordForm = {
 
 type ProfileResponse = {
   user?: {
+    firstName: string;
+    lastName: string;
     fullName: string;
     email: string;
+    birthDate: string | null;
     city: string | null;
-    interest: string | null;
+    gender: string | null;
+    educationLevel: string | null;
+    profileCompleted: boolean;
   };
   message?: string;
 };
@@ -35,16 +45,18 @@ type UpdateResponse = {
   message: string;
 };
 
-type SessionUser = {
-  fullName: string;
-  email: string;
-  city: string;
-  interest: string;
-};
-
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 const preferencesStorageKey = "vp_preferences";
+
+const educationOptions = [
+  { value: "6th_grade", label: "6º Ano" },
+  { value: "9th_grade", label: "9º Ano" },
+  { value: "12th_grade", label: "12º Ano" },
+  { value: "bachelor", label: "Licenciatura" },
+  { value: "master", label: "Mestrado" },
+  { value: "doctorate", label: "Doutoramento" },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -64,6 +76,14 @@ export default function DashboardPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
+  const mustCompleteProfile = useMemo(() => {
+    if (!profile) {
+      return false;
+    }
+
+    return !profile.profileCompleted;
+  }, [profile]);
+
   useEffect(() => {
     // Garante que apenas utilizadores autenticados acedem ao dashboard.
     const storedSession = localStorage.getItem(sessionStorageKey);
@@ -77,9 +97,7 @@ export default function DashboardPage() {
 
     const loadProfile = async () => {
       try {
-        const response = await fetch(
-          `/api/user?email=${encodeURIComponent(storedSession)}`
-        );
+        const response = await fetch(`/api/user?email=${encodeURIComponent(storedSession)}`);
         const data = (await response.json()) as ProfileResponse;
 
         if (!response.ok || !data.user) {
@@ -88,19 +106,19 @@ export default function DashboardPage() {
         }
 
         const normalizedProfile: UserProfile = {
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
           fullName: data.user.fullName,
           email: data.user.email,
+          birthDate: data.user.birthDate ?? "",
           city: data.user.city ?? "",
-          interest: data.user.interest ?? "",
+          gender: data.user.gender ?? "",
+          educationLevel: data.user.educationLevel ?? "",
+          profileCompleted: data.user.profileCompleted,
         };
 
         setProfile(normalizedProfile);
-
-        // Atualiza os dados persistidos do utilizador para manter a sessão consistente.
-        const normalizedSessionUser: SessionUser = {
-          ...normalizedProfile,
-        };
-        localStorage.setItem(userStorageKey, JSON.stringify(normalizedSessionUser));
+        localStorage.setItem(userStorageKey, JSON.stringify(normalizedProfile));
       } catch (error) {
         router.push("/login");
       }
@@ -114,12 +132,12 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const handleProfileChange = (field: keyof UserProfile, value: string) => {
+  const handleProfileChange = (field: keyof UserProfile, value: string | boolean) => {
     if (!profile) {
       return;
     }
 
-    setProfile({ ...profile, [field]: value });
+    setProfile({ ...profile, [field]: value } as UserProfile);
   };
 
   const handlePreferenceChange = (field: keyof UserPreferences) => {
@@ -145,9 +163,12 @@ export default function DashboardPage() {
         body: JSON.stringify({
           currentEmail: sessionEmail,
           email: profile.email,
-          fullName: profile.fullName,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          birthDate: profile.birthDate,
           city: profile.city,
-          interest: profile.interest,
+          gender: profile.gender,
+          educationLevel: profile.educationLevel,
         }),
       });
 
@@ -158,11 +179,17 @@ export default function DashboardPage() {
         return;
       }
 
-      // Atualiza as preferências e os dados de sessão no armazenamento local.
+      const refreshedProfile = {
+        ...profile,
+        fullName: `${profile.firstName} ${profile.lastName}`.trim(),
+        profileCompleted: true,
+      };
+
       localStorage.setItem(preferencesStorageKey, JSON.stringify(preferences));
       localStorage.setItem(sessionStorageKey, profile.email);
-      localStorage.setItem(userStorageKey, JSON.stringify(profile));
+      localStorage.setItem(userStorageKey, JSON.stringify(refreshedProfile));
       setSessionEmail(profile.email);
+      setProfile(refreshedProfile);
       setProfileFeedback(data.message);
     } catch (error) {
       setProfileFeedback("Não foi possível guardar as alterações. Tente novamente.");
@@ -209,10 +236,10 @@ export default function DashboardPage() {
         return;
       }
 
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
       setPasswordFeedback(data.message);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
     } catch (error) {
-      setPasswordFeedback("Não foi possível alterar a senha. Tente novamente.");
+      setPasswordFeedback("Não foi possível atualizar a senha. Tente novamente.");
     } finally {
       setIsSavingPassword(false);
     }
@@ -226,208 +253,112 @@ export default function DashboardPage() {
   };
 
   if (!profile) {
-    return null;
+    return <p className="text-sm text-slate-500">A carregar perfil...</p>;
   }
 
   return (
     <section className="space-y-8">
-      {/* Contém o conteúdo centrado e agrupado em caixas. */}
-      <div className="mx-auto w-full max-w-5xl space-y-8">
-        {/* Cabeçalho com o título do dashboard dentro de um cartão. */}
-        <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-          <div className="space-y-3">
-            <h1 className="page-title">Dashboard</h1>
-            <p className="text-base leading-7 text-justify text-slate-500">
-              Atualize os seus dados pessoais, a palavra-passe e as preferências da conta.
+      {mustCompleteProfile && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+            <h2 className="section-title">Complete o seu perfil</h2>
+            <p className="mt-2 text-sm text-justify text-slate-600">
+              Os dados seguintes nunca serão partilhados e servem apenas para fins estatísticos. Este preenchimento é obrigatório para concluir o primeiro acesso.
+            </p>
+            <p className="mt-3 text-sm font-semibold text-[color:var(--primary)]">
+              Preencha: data de nascimento, cidade, género e habilitações literárias.
             </p>
           </div>
+        </div>
+      )}
+
+      <div className="mx-auto w-full max-w-6xl space-y-8">
+        <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+          <h1 className="page-title">Olá, {profile.firstName}</h1>
+          <p className="mt-3 text-sm text-slate-600">Faça a gestão da sua conta e segurança.</p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-          {/* Painel principal com edição de perfil e alteração de senha. */}
-          <article className="rounded-[32px] bg-white p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-            <div className="flex flex-col gap-8">
-              <div className="flex flex-col gap-6">
-                <div>
-                  <p className="section-label">Perfil</p>
-                  <h2 className="mt-2 section-title">Informações pessoais</h2>
-                  <p className="mt-2 text-sm text-justify text-slate-500">
-                    Mantenha os seus dados atualizados para uma experiência mais personalizada.
-                  </p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    Nome completo
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="fullName"
-                      type="text"
-                      value={profile.fullName}
-                      onChange={(event) => handleProfileChange("fullName", event.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    E-mail
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="email"
-                      type="email"
-                      value={profile.email}
-                      onChange={(event) => handleProfileChange("email", event.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    Cidade
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="city"
-                      type="text"
-                      value={profile.city}
-                      onChange={(event) => handleProfileChange("city", event.target.value)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    Área de interesse
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="interest"
-                      type="text"
-                      value={profile.interest}
-                      onChange={(event) => handleProfileChange("interest", event.target.value)}
-                    />
-                  </label>
-                </div>
-                {profileFeedback && (
-                  <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-justify text-emerald-700">
-                    {profileFeedback}
-                  </p>
-                )}
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
-                    type="button"
-                    onClick={handleSaveProfile}
-                  >
-                    {isSavingProfile ? "A guardar..." : "Guardar alterações"}
-                  </button>
-                  <button
-                    className="button-size-login border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
-                    type="button"
-                    onClick={handleLogout}
-                  >
-                    Terminar sessão
-                  </button>
-                </div>
-              </div>
+        <article className="rounded-[32px] bg-white p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Primeiro nome
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.firstName} onChange={(event) => handleProfileChange("firstName", event.target.value)} />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Último nome
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.lastName} onChange={(event) => handleProfileChange("lastName", event.target.value)} />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+              E-mail
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.email} onChange={(event) => handleProfileChange("email", event.target.value)} />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Data de nascimento
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" type="date" value={profile.birthDate} onChange={(event) => handleProfileChange("birthDate", event.target.value)} />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Cidade
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.city} onChange={(event) => handleProfileChange("city", event.target.value)} />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Género
+              <select className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.gender} onChange={(event) => handleProfileChange("gender", event.target.value)}>
+                <option value="">Selecione</option>
+                <option value="male">Masculino</option>
+                <option value="female">Feminino</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Habilitações literárias
+              <select className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.educationLevel} onChange={(event) => handleProfileChange("educationLevel", event.target.value)}>
+                <option value="">Selecione</option>
+                {educationOptions.map((educationOption) => (
+                  <option key={educationOption.value} value={educationOption.value}>{educationOption.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-              <div className="border-t border-slate-200 pt-8">
-                <div>
-                  <p className="section-label">Segurança</p>
-                  <h2 className="mt-2 section-title">Alterar palavra-passe</h2>
-                  <p className="mt-2 text-sm text-justify text-slate-500">
-                    Introduza a senha atual e repita a nova senha para confirmar a alteração.
-                  </p>
-                </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-                    Senha atual
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="currentPassword"
-                      placeholder="Digite a senha atual"
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(event) =>
-                        handlePasswordFieldChange("currentPassword", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    Nova senha
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="newPassword"
-                      placeholder="Digite a nova senha"
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(event) =>
-                        handlePasswordFieldChange("newPassword", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                    Confirmar nova senha
-                    <input
-                      className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                      name="confirmNewPassword"
-                      placeholder="Repita a nova senha"
-                      type="password"
-                      value={passwordForm.confirmNewPassword}
-                      onChange={(event) =>
-                        handlePasswordFieldChange("confirmNewPassword", event.target.value)
-                      }
-                    />
-                  </label>
-                </div>
-                {passwordFeedback && (
-                  <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-justify text-emerald-700">
-                    {passwordFeedback}
-                  </p>
-                )}
-                <div className="mt-4">
-                  <button
-                    className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
-                    type="button"
-                    onClick={handleChangePassword}
-                  >
-                    {isSavingPassword ? "A atualizar..." : "Atualizar senha"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </article>
+          {profileFeedback && (
+            <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{profileFeedback}</p>
+          )}
 
-          {/* Painel lateral com funções básicas da conta. */}
-          <aside className="space-y-6">
-            <div className="rounded-[32px] bg-white p-6 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-              <h3 className="card-title">Preferências</h3>
-              <p className="mt-2 text-sm text-justify text-slate-500">
-                Ajuste as opções essenciais para receber comunicações.
-              </p>
-              <div className="mt-4 space-y-3">
-                <label className="flex items-center justify-between text-sm text-slate-700">
-                  Receber newsletter
-                  <input
-                    className="h-4 w-4 accent-[color:var(--primary)]"
-                    type="checkbox"
-                    checked={preferences.receiveNewsletter}
-                    onChange={() => handlePreferenceChange("receiveNewsletter")}
-                  />
-                </label>
-                <label className="flex items-center justify-between text-sm text-slate-700">
-                  Notificações da comunidade
-                  <input
-                    className="h-4 w-4 accent-[color:var(--primary)]"
-                    type="checkbox"
-                    checked={preferences.allowNotifications}
-                    onChange={() => handlePreferenceChange("allowNotifications")}
-                  />
-                </label>
-              </div>
-            </div>
+          <div className="mt-4 flex gap-3">
+            <button className="button-size-login bg-[color:var(--primary)] text-white" type="button" onClick={handleSaveProfile}>
+              {isSavingProfile ? "A guardar..." : "Guardar perfil"}
+            </button>
+            <button className="button-size-login border border-slate-200" type="button" onClick={handleLogout}>
+              Terminar sessão
+            </button>
+          </div>
 
-            <div className="rounded-[32px] bg-[color:var(--surface)] p-6 text-sm text-slate-600 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-              <p className="font-semibold text-[color:var(--foreground)]">
-                Dicas rápidas
-              </p>
-              <ul className="mt-3 space-y-2 text-justify">
-                <li>Atualize o perfil sempre que mudar de cidade.</li>
-                <li>Ative as notificações para receber novidades.</li>
-                <li>Altere a senha com frequência para maior segurança.</li>
-              </ul>
+          <div className="mt-8 border-t border-slate-200 pt-8">
+            <h2 className="section-title">Alterar palavra-passe</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 md:col-span-2" placeholder="Senha atual" type="password" value={passwordForm.currentPassword} onChange={(event) => handlePasswordFieldChange("currentPassword", event.target.value)} />
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" placeholder="Nova senha" type="password" value={passwordForm.newPassword} onChange={(event) => handlePasswordFieldChange("newPassword", event.target.value)} />
+              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" placeholder="Confirmar nova senha" type="password" value={passwordForm.confirmNewPassword} onChange={(event) => handlePasswordFieldChange("confirmNewPassword", event.target.value)} />
             </div>
-          </aside>
-        </div>
+            {passwordFeedback && <p className="mt-4 text-sm text-slate-600">{passwordFeedback}</p>}
+            <button className="button-size-login mt-4 bg-[color:var(--primary)] text-white" type="button" onClick={handleChangePassword}>
+              {isSavingPassword ? "A atualizar..." : "Atualizar senha"}
+            </button>
+          </div>
+        </article>
+
+        <aside className="rounded-[32px] bg-white p-6 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+          <h3 className="card-title">Preferências</h3>
+          <div className="mt-4 space-y-3">
+            <label className="flex items-center justify-between text-sm text-slate-700">
+              Receber newsletter
+              <input className="h-4 w-4 accent-[color:var(--primary)]" type="checkbox" checked={preferences.receiveNewsletter} onChange={() => handlePreferenceChange("receiveNewsletter")} />
+            </label>
+            <label className="flex items-center justify-between text-sm text-slate-700">
+              Notificações da comunidade
+              <input className="h-4 w-4 accent-[color:var(--primary)]" type="checkbox" checked={preferences.allowNotifications} onChange={() => handlePreferenceChange("allowNotifications")} />
+            </label>
+          </div>
+        </aside>
       </div>
     </section>
   );

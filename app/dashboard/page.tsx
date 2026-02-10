@@ -72,8 +72,10 @@ export default function DashboardPage() {
     confirmNewPassword: "",
   });
   const [profileFeedback, setProfileFeedback] = useState<string | null>(null);
+  const [firstAccessFeedback, setFirstAccessFeedback] = useState<string | null>(null);
   const [passwordFeedback, setPasswordFeedback] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isCompletingFirstAccess, setIsCompletingFirstAccess] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const mustCompleteProfile = useMemo(() => {
@@ -148,13 +150,20 @@ export default function DashboardPage() {
     setPasswordForm((previous) => ({ ...previous, [field]: value }));
   };
 
-  const handleSaveProfile = async () => {
-    if (!profile || !sessionEmail || isSavingProfile) {
+  const saveProfile = async (isFirstAccessCompletion: boolean) => {
+    if (!profile || !sessionEmail) {
       return;
     }
 
-    setIsSavingProfile(true);
-    setProfileFeedback(null);
+    const setSavingState = isFirstAccessCompletion
+      ? setIsCompletingFirstAccess
+      : setIsSavingProfile;
+    const setFeedbackState = isFirstAccessCompletion
+      ? setFirstAccessFeedback
+      : setProfileFeedback;
+
+    setSavingState(true);
+    setFeedbackState(null);
 
     try {
       const response = await fetch("/api/user", {
@@ -175,27 +184,67 @@ export default function DashboardPage() {
       const data = (await response.json()) as UpdateResponse;
 
       if (!response.ok) {
-        setProfileFeedback(data.message);
+        setFeedbackState(data.message);
         return;
       }
 
-      const refreshedProfile = {
+
+      const refreshedProfile: UserProfile = {
+
         ...profile,
         fullName: `${profile.firstName} ${profile.lastName}`.trim(),
         profileCompleted: true,
       };
 
+
+      // Mantém sessão, preferências e perfil sincronizados após guardar alterações.
       localStorage.setItem(preferencesStorageKey, JSON.stringify(preferences));
       localStorage.setItem(sessionStorageKey, profile.email);
       localStorage.setItem(userStorageKey, JSON.stringify(refreshedProfile));
+
       setSessionEmail(profile.email);
       setProfile(refreshedProfile);
-      setProfileFeedback(data.message);
+      setFeedbackState(data.message);
+
     } catch (error) {
-      setProfileFeedback("Não foi possível guardar as alterações. Tente novamente.");
+      setFeedbackState("Não foi possível guardar as alterações. Tente novamente.");
     } finally {
-      setIsSavingProfile(false);
+      setSavingState(false);
     }
+  };
+
+  const handleCompleteFirstAccess = async () => {
+    if (!profile || isCompletingFirstAccess) {
+      return;
+    }
+
+    setFirstAccessFeedback(null);
+
+    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel) {
+      setFirstAccessFeedback(
+        "Preencha data de nascimento, cidade, género e habilitações literárias para concluir o primeiro acesso."
+      );
+      return;
+    }
+
+    await saveProfile(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile || isSavingProfile) {
+      return;
+    }
+
+    setProfileFeedback(null);
+
+    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel) {
+      setProfileFeedback(
+        "Data de nascimento, cidade, género e habilitações literárias são obrigatórios."
+      );
+      return;
+    }
+
+    await saveProfile(false);
   };
 
   const handleChangePassword = async () => {
@@ -268,6 +317,73 @@ export default function DashboardPage() {
             <p className="mt-3 text-sm font-semibold text-[color:var(--primary)]">
               Preencha: data de nascimento, cidade, género e habilitações literárias.
             </p>
+
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Data de nascimento
+                <input
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                  type="date"
+                  value={profile.birthDate}
+                  onChange={(event) => handleProfileChange("birthDate", event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Cidade
+                <input
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                  value={profile.city}
+                  onChange={(event) => handleProfileChange("city", event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Género
+                <select
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                  value={profile.gender}
+                  onChange={(event) => handleProfileChange("gender", event.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  <option value="male">Masculino</option>
+                  <option value="female">Feminino</option>
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Habilitações literárias
+                <select
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                  value={profile.educationLevel}
+                  onChange={(event) => handleProfileChange("educationLevel", event.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  {educationOptions.map((educationOption) => (
+                    <option key={educationOption.value} value={educationOption.value}>
+                      {educationOption.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {firstAccessFeedback && (
+              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                {firstAccessFeedback}
+              </p>
+            )}
+
+            <div className="mt-4">
+              <button
+                className="button-size-login bg-[color:var(--primary)] text-white"
+                type="button"
+                onClick={handleCompleteFirstAccess}
+              >
+                {isCompletingFirstAccess ? "A concluir..." : "Concluir primeiro acesso"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -282,52 +398,99 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Primeiro nome
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.firstName} onChange={(event) => handleProfileChange("firstName", event.target.value)} />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                value={profile.firstName}
+                onChange={(event) => handleProfileChange("firstName", event.target.value)}
+              />
             </label>
+
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Último nome
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.lastName} onChange={(event) => handleProfileChange("lastName", event.target.value)} />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                value={profile.lastName}
+                onChange={(event) => handleProfileChange("lastName", event.target.value)}
+              />
             </label>
+
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
               E-mail
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.email} onChange={(event) => handleProfileChange("email", event.target.value)} />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                value={profile.email}
+                onChange={(event) => handleProfileChange("email", event.target.value)}
+              />
             </label>
+
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Data de nascimento
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" type="date" value={profile.birthDate} onChange={(event) => handleProfileChange("birthDate", event.target.value)} />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                type="date"
+                value={profile.birthDate}
+                onChange={(event) => handleProfileChange("birthDate", event.target.value)}
+              />
             </label>
+
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Cidade
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.city} onChange={(event) => handleProfileChange("city", event.target.value)} />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                value={profile.city}
+                onChange={(event) => handleProfileChange("city", event.target.value)}
+              />
             </label>
+
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Género
-              <select className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.gender} onChange={(event) => handleProfileChange("gender", event.target.value)}>
+              <select
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                value={profile.gender}
+                onChange={(event) => handleProfileChange("gender", event.target.value)}
+              >
                 <option value="">Selecione</option>
                 <option value="male">Masculino</option>
                 <option value="female">Feminino</option>
               </select>
             </label>
+
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Habilitações literárias
-              <select className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" value={profile.educationLevel} onChange={(event) => handleProfileChange("educationLevel", event.target.value)}>
+              <select
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                value={profile.educationLevel}
+                onChange={(event) => handleProfileChange("educationLevel", event.target.value)}
+              >
                 <option value="">Selecione</option>
                 {educationOptions.map((educationOption) => (
-                  <option key={educationOption.value} value={educationOption.value}>{educationOption.label}</option>
+                  <option key={educationOption.value} value={educationOption.value}>
+                    {educationOption.label}
+                  </option>
                 ))}
               </select>
             </label>
           </div>
 
           {profileFeedback && (
-            <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{profileFeedback}</p>
+            <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {profileFeedback}
+            </p>
           )}
 
           <div className="mt-4 flex gap-3">
-            <button className="button-size-login bg-[color:var(--primary)] text-white" type="button" onClick={handleSaveProfile}>
+            <button
+              className="button-size-login bg-[color:var(--primary)] text-white"
+              type="button"
+              onClick={handleSaveProfile}
+            >
               {isSavingProfile ? "A guardar..." : "Guardar perfil"}
             </button>
-            <button className="button-size-login border border-slate-200" type="button" onClick={handleLogout}>
+            <button
+              className="button-size-login border border-slate-200"
+              type="button"
+              onClick={handleLogout}
+            >
               Terminar sessão
             </button>
           </div>
@@ -335,12 +498,41 @@ export default function DashboardPage() {
           <div className="mt-8 border-t border-slate-200 pt-8">
             <h2 className="section-title">Alterar palavra-passe</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 md:col-span-2" placeholder="Senha atual" type="password" value={passwordForm.currentPassword} onChange={(event) => handlePasswordFieldChange("currentPassword", event.target.value)} />
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" placeholder="Nova senha" type="password" value={passwordForm.newPassword} onChange={(event) => handlePasswordFieldChange("newPassword", event.target.value)} />
-              <input className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3" placeholder="Confirmar nova senha" type="password" value={passwordForm.confirmNewPassword} onChange={(event) => handlePasswordFieldChange("confirmNewPassword", event.target.value)} />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 md:col-span-2"
+                placeholder="Senha atual"
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(event) =>
+                  handlePasswordFieldChange("currentPassword", event.target.value)
+                }
+              />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                placeholder="Nova senha"
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(event) =>
+                  handlePasswordFieldChange("newPassword", event.target.value)
+                }
+              />
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                placeholder="Confirmar nova senha"
+                type="password"
+                value={passwordForm.confirmNewPassword}
+                onChange={(event) =>
+                  handlePasswordFieldChange("confirmNewPassword", event.target.value)
+                }
+              />
             </div>
             {passwordFeedback && <p className="mt-4 text-sm text-slate-600">{passwordFeedback}</p>}
-            <button className="button-size-login mt-4 bg-[color:var(--primary)] text-white" type="button" onClick={handleChangePassword}>
+            <button
+              className="button-size-login mt-4 bg-[color:var(--primary)] text-white"
+              type="button"
+              onClick={handleChangePassword}
+            >
+
               {isSavingPassword ? "A atualizar..." : "Atualizar senha"}
             </button>
           </div>
@@ -351,11 +543,23 @@ export default function DashboardPage() {
           <div className="mt-4 space-y-3">
             <label className="flex items-center justify-between text-sm text-slate-700">
               Receber newsletter
-              <input className="h-4 w-4 accent-[color:var(--primary)]" type="checkbox" checked={preferences.receiveNewsletter} onChange={() => handlePreferenceChange("receiveNewsletter")} />
+
+              <input
+                className="h-4 w-4 accent-[color:var(--primary)]"
+                type="checkbox"
+                checked={preferences.receiveNewsletter}
+                onChange={() => handlePreferenceChange("receiveNewsletter")}
+              />
             </label>
             <label className="flex items-center justify-between text-sm text-slate-700">
               Notificações da comunidade
-              <input className="h-4 w-4 accent-[color:var(--primary)]" type="checkbox" checked={preferences.allowNotifications} onChange={() => handlePreferenceChange("allowNotifications")} />
+              <input
+                className="h-4 w-4 accent-[color:var(--primary)]"
+                type="checkbox"
+                checked={preferences.allowNotifications}
+                onChange={() => handlePreferenceChange("allowNotifications")}
+              />
+
             </label>
           </div>
         </aside>

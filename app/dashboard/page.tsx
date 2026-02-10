@@ -188,11 +188,14 @@ export default function DashboardPage() {
         return;
       }
 
+
       const refreshedProfile: UserProfile = {
+
         ...profile,
         fullName: `${profile.firstName} ${profile.lastName}`.trim(),
         profileCompleted: true,
       };
+
 
       // Mantém sessão, preferências e perfil sincronizados após guardar alterações.
       localStorage.setItem(preferencesStorageKey, JSON.stringify(preferences));
@@ -202,6 +205,7 @@ export default function DashboardPage() {
       setSessionEmail(profile.email);
       setProfile(refreshedProfile);
       setFeedbackState(data.message);
+
     } catch (error) {
       setFeedbackState("Não foi possível guardar as alterações. Tente novamente.");
     } finally {
@@ -313,6 +317,7 @@ export default function DashboardPage() {
             <p className="mt-3 text-sm font-semibold text-[color:var(--primary)]">
               Preencha: data de nascimento, cidade, género e habilitações literárias.
             </p>
+
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -527,6 +532,7 @@ export default function DashboardPage() {
               type="button"
               onClick={handleChangePassword}
             >
+
               {isSavingPassword ? "A atualizar..." : "Atualizar senha"}
             </button>
           </div>
@@ -537,6 +543,7 @@ export default function DashboardPage() {
           <div className="mt-4 space-y-3">
             <label className="flex items-center justify-between text-sm text-slate-700">
               Receber newsletter
+
               <input
                 className="h-4 w-4 accent-[color:var(--primary)]"
                 type="checkbox"
@@ -552,6 +559,7 @@ export default function DashboardPage() {
                 checked={preferences.allowNotifications}
                 onChange={() => handlePreferenceChange("allowNotifications")}
               />
+
             </label>
           </div>
         </aside>

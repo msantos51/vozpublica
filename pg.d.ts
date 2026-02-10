@@ -1,3 +1,4 @@
+
 // Define tipagens mínimas do módulo "pg" para manter segurança de tipos sem depender de @types/pg.
 declare module "pg" {
   // Representa um valor válido para parâmetros SQL parametrizados.
@@ -24,3 +25,4 @@ declare module "pg" {
     ): Promise<QueryResult<Row>>;
   }
 }
+

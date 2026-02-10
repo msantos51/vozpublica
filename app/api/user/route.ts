@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
-import { hashPassword } from "@/lib/password";
 
 type UserRow = {
   id: string;
@@ -17,7 +16,6 @@ type UpdatePayload = {
   fullName: string;
   city: string;
   interest: string;
-  password?: string;
 };
 
 export const GET = async (request: Request) => {
@@ -69,37 +67,34 @@ export const PUT = async (request: Request) => {
 
   const normalizedCurrentEmail = payload.currentEmail.trim().toLowerCase();
   const normalizedEmail = payload.email.trim().toLowerCase();
-  const updateValues = [
-    payload.fullName.trim(),
-    normalizedEmail,
-    payload.city?.trim() || null,
-    payload.interest?.trim() || null,
-    normalizedCurrentEmail,
-  ];
 
-  if (payload.password) {
-    const passwordHash = hashPassword(payload.password);
-    await query(
-      `update users
-       set full_name = $1,
-           email = $2,
-           city = $3,
-           interest = $4,
-           password_hash = $5
-       where email = $6`,
-      [...updateValues.slice(0, 4), passwordHash, updateValues[4]]
-    );
-  } else {
-    await query(
-      `update users
-       set full_name = $1,
-           email = $2,
-           city = $3,
-           interest = $4
-       where email = $5`,
-      updateValues
+  const existingUser = await query<UserRow>(
+    "select id from users where email = $1",
+    [normalizedCurrentEmail]
+  );
+
+  if (!existingUser.rows[0]) {
+    return NextResponse.json(
+      { message: "Utilizador não encontrado." },
+      { status: 404 }
     );
   }
+
+  await query(
+    `update users
+     set full_name = $1,
+         email = $2,
+         city = $3,
+         interest = $4
+     where email = $5`,
+    [
+      payload.fullName.trim(),
+      normalizedEmail,
+      payload.city?.trim() || null,
+      payload.interest?.trim() || null,
+      normalizedCurrentEmail,
+    ]
+  );
 
   return NextResponse.json({ message: "Perfil atualizado com sucesso." });
 };

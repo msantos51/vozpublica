@@ -31,6 +31,11 @@ body {
 }
 
 @layer components {
+  /* Uniformiza a dimensão de todos os botões com base no botão de login da home. */
+  .button-size-login {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold whitespace-nowrap;
+  }
+
   /* Define estilos consistentes para títulos e subtítulos em todo o site. */
   .page-title {
     @apply text-3xl font-semibold text-[color:var(--foreground)];

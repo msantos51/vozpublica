@@ -22,13 +22,13 @@ export default function EnterprisePage() {
             {/* Ações principais da página. */}
             <div className="flex flex-wrap gap-3">
               <Link
-                className="rounded-full bg-[color:var(--primary)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
+                className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
                 href="/contact"
               >
                 Falar connosco
               </Link>
               <button
-                className="rounded-full border border-zinc-200 px-6 py-3 text-sm font-semibold text-zinc-700 transition hover:border-zinc-300"
+                className="button-size-login border border-zinc-200 text-zinc-700 transition hover:border-zinc-300"
                 type="button"
               >
                 Ver exemplos de estudos
@@ -128,13 +128,13 @@ export default function EnterprisePage() {
             {/* Ações finais para contacto. */}
             <div className="flex flex-wrap gap-3">
               <button
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:brightness-95"
+                className="button-size-login bg-white text-slate-900 transition hover:brightness-95"
                 type="button"
               >
                 Entrar em contacto
               </button>
               <button
-                className="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:border-white"
+                className="button-size-login border border-white/40 text-white transition hover:border-white"
                 type="button"
               >
                 Agendar conversa

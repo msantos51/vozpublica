@@ -10,10 +10,15 @@ type LoginPayload = {
 
 type UserRow = {
   id: string;
+  first_name: string;
+  last_name: string;
   full_name: string;
   email: string;
+  birth_date: string | null;
   city: string | null;
-  interest: string | null;
+  gender: string | null;
+  education_level: string | null;
+  profile_completed: boolean;
   password_hash: string;
 };
 
@@ -30,7 +35,7 @@ export const POST = async (request: Request) => {
 
   const normalizedEmail = payload.email.trim().toLowerCase();
   const result = await query<UserRow>(
-    `select id, full_name, email, city, interest, password_hash
+    `select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed, password_hash
      from users
      where email = $1`,
     [normalizedEmail]
@@ -49,10 +54,15 @@ export const POST = async (request: Request) => {
     message: "Login efetuado com sucesso.",
     user: {
       id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
       fullName: user.full_name,
       email: user.email,
+      birthDate: user.birth_date,
       city: user.city,
-      interest: user.interest,
+      gender: user.gender,
+      educationLevel: user.education_level,
+      profileCompleted: user.profile_completed,
     },
   });
 };

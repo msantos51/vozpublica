@@ -4,20 +4,19 @@ import { query } from "@/lib/database";
 import { hashPassword } from "@/lib/password";
 
 type RegisterPayload = {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  city: string;
-  interest: string;
   password: string;
   confirmPassword: string;
 };
 
 type UserRow = {
   id: string;
+  first_name: string;
+  last_name: string;
   full_name: string;
   email: string;
-  city: string | null;
-  interest: string | null;
   created_at: string;
 };
 
@@ -25,9 +24,9 @@ export const POST = async (request: Request) => {
   // Lê o corpo da requisição para criar o novo utilizador.
   const payload = (await request.json()) as RegisterPayload;
 
-  if (!payload.fullName || !payload.email || !payload.password || !payload.confirmPassword) {
+  if (!payload.firstName || !payload.lastName || !payload.email || !payload.password || !payload.confirmPassword) {
     return NextResponse.json(
-      { message: "Preencha o nome, e-mail, senha e confirmação para continuar." },
+      { message: "Preencha primeiro nome, último nome, e-mail, senha e confirmação para continuar." },
       { status: 400 }
     );
   }
@@ -41,10 +40,7 @@ export const POST = async (request: Request) => {
 
   const normalizedEmail = payload.email.trim().toLowerCase();
 
-  const existingUser = await query<UserRow>(
-    "select id from users where email = $1",
-    [normalizedEmail]
-  );
+  const existingUser = await query<UserRow>("select id from users where email = $1", [normalizedEmail]);
 
   if (existingUser.rowCount && existingUser.rowCount > 0) {
     return NextResponse.json(
@@ -53,29 +49,26 @@ export const POST = async (request: Request) => {
     );
   }
 
+  const firstName = payload.firstName.trim();
+  const lastName = payload.lastName.trim();
+  const fullName = `${firstName} ${lastName}`.trim();
   const passwordHash = hashPassword(payload.password);
 
   const result = await query<UserRow>(
-    `insert into users (full_name, email, city, interest, password_hash)
-     values ($1, $2, $3, $4, $5)
-     returning id, full_name, email, city, interest, created_at`,
-    [
-      payload.fullName.trim(),
-      normalizedEmail,
-      payload.city?.trim() || null,
-      payload.interest?.trim() || null,
-      passwordHash,
-    ]
+    `insert into users (first_name, last_name, full_name, email, password_hash, profile_completed)
+     values ($1, $2, $3, $4, $5, false)
+     returning id, first_name, last_name, full_name, email, created_at`,
+    [firstName, lastName, fullName, normalizedEmail, passwordHash]
   );
 
   return NextResponse.json({
     message: "Conta criada com sucesso.",
     user: {
       id: result.rows[0]?.id,
+      firstName: result.rows[0]?.first_name,
+      lastName: result.rows[0]?.last_name,
       fullName: result.rows[0]?.full_name,
       email: result.rows[0]?.email,
-      city: result.rows[0]?.city,
-      interest: result.rows[0]?.interest,
     },
   });
 };

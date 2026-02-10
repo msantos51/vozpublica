@@ -7,18 +7,28 @@ import { useEffect, useState } from "react";
 type LoginResponse = {
   message: string;
   user?: {
+    firstName: string;
+    lastName: string;
     fullName: string;
     email: string;
+    birthDate: string | null;
     city: string | null;
-    interest: string | null;
+    gender: string | null;
+    educationLevel: string | null;
+    profileCompleted: boolean;
   };
 };
 
 type SessionUser = {
+  firstName: string;
+  lastName: string;
   fullName: string;
   email: string;
+  birthDate: string;
   city: string;
-  interest: string;
+  gender: string;
+  educationLevel: string;
+  profileCompleted: boolean;
 };
 
 const userStorageKey = "vp_user";
@@ -68,10 +78,15 @@ export default function LoginPage() {
 
       if (data.user?.email) {
         const normalizedSessionUser: SessionUser = {
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
           fullName: data.user.fullName,
           email: data.user.email,
+          birthDate: data.user.birthDate ?? "",
           city: data.user.city ?? "",
-          interest: data.user.interest ?? "",
+          gender: data.user.gender ?? "",
+          educationLevel: data.user.educationLevel ?? "",
+          profileCompleted: data.user.profileCompleted,
         };
 
         localStorage.setItem(sessionStorageKey, normalizedSessionUser.email);
@@ -88,9 +103,7 @@ export default function LoginPage() {
 
   return (
     <section className="space-y-8">
-      {/* Contém o conteúdo centrado e agrupado em caixas. */}
       <div className="mx-auto w-full max-w-5xl space-y-8">
-        {/* Cabeçalho introdutório da página de login. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-3">
             <h1 className="page-title">Login</h1>
@@ -100,10 +113,8 @@ export default function LoginPage() {
           </div>
         </header>
 
-        {/* Cartão com o formulário de autenticação. */}
         <article className="rounded-[32px] bg-white p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
-            {/* Texto de apoio com instruções rápidas. */}
             <div>
               <p className="section-label">Entrar</p>
               <h2 className="mt-2 section-title">Bem-vindo de volta.</h2>
@@ -134,13 +145,11 @@ export default function LoginPage() {
                   onChange={(event) => setPassword(event.target.value)}
                 />
               </label>
-              {/* Feedback visível em caso de erro ou orientação. */}
               {feedback && (
                 <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-justify text-amber-700 md:col-span-2">
                   {feedback}
                 </p>
               )}
-              {/* Ações principais do formulário. */}
               <div className="flex flex-wrap items-center gap-3 md:col-span-2">
                 <button
                   className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"

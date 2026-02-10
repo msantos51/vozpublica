@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type RegisterForm = {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  city: string;
-  interest: string;
   password: string;
   confirmPassword: string;
 };
@@ -21,10 +20,9 @@ type FeedbackState = {
 export default function AccountPage() {
   const router = useRouter();
   const [formData, setFormData] = useState<RegisterForm>({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
-    city: "",
-    interest: "",
     password: "",
     confirmPassword: "",
   });
@@ -82,47 +80,52 @@ export default function AccountPage() {
 
   return (
     <section className="space-y-8">
-      {/* Contém o conteúdo centrado e agrupado em caixas. */}
       <div className="mx-auto w-full max-w-5xl space-y-8">
-        {/* Cabeçalho introdutório da página de criação de conta. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-3">
             <h1 className="page-title">Conta</h1>
             <p className="text-base leading-7 text-justify text-slate-500">
-              Crie o seu perfil para acompanhar iniciativas e participar nas
-              discussões da comunidade.
+              Crie a sua conta com os dados essenciais. Os dados estatísticos serão pedidos apenas no primeiro login.
             </p>
           </div>
         </header>
 
-        {/* Cartão principal com o formulário de criação de conta. */}
         <article className="rounded-[32px] bg-white p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
-            {/* Texto de apoio com contexto sobre o cadastro. */}
             <div>
               <p className="section-label">Criar conta</p>
-              <h2 className="mt-2 section-title">
-                Participe da comunidade com o seu perfil.
-              </h2>
+              <h2 className="mt-2 section-title">Registo rápido e seguro.</h2>
               <p className="mt-2 text-sm text-justify text-slate-500">
-                Preencha os dados abaixo para criar a sua conta e acompanhar as
-                iniciativas locais.
+                Indique primeiro nome, último nome, e-mail e senha para criar o acesso.
               </p>
             </div>
-            {/* Formulário com campos essenciais para cadastro. */}
+
             <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                Nome completo
+                Primeiro nome
                 <input
                   className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                  name="fullName"
-                  placeholder="Digite o seu nome"
+                  name="firstName"
+                  placeholder="Digite o seu primeiro nome"
                   type="text"
-                  value={formData.fullName}
-                  onChange={(event) => handleChange("fullName", event.target.value)}
+                  value={formData.firstName}
+                  onChange={(event) => handleChange("firstName", event.target.value)}
                 />
               </label>
+
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                Último nome
+                <input
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
+                  name="lastName"
+                  placeholder="Digite o seu último nome"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(event) => handleChange("lastName", event.target.value)}
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
                 E-mail
                 <input
                   className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
@@ -133,6 +136,7 @@ export default function AccountPage() {
                   onChange={(event) => handleChange("email", event.target.value)}
                 />
               </label>
+
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Senha
                 <input
@@ -144,6 +148,7 @@ export default function AccountPage() {
                   onChange={(event) => handleChange("password", event.target.value)}
                 />
               </label>
+
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Confirmar senha
                 <input
@@ -155,29 +160,7 @@ export default function AccountPage() {
                   onChange={(event) => handleChange("confirmPassword", event.target.value)}
                 />
               </label>
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                Cidade
-                <input
-                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                  name="city"
-                  placeholder="Sua cidade"
-                  type="text"
-                  value={formData.city}
-                  onChange={(event) => handleChange("city", event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-                Área de interesse
-                <input
-                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                  name="interest"
-                  placeholder="Ex.: educação, saúde, mobilidade"
-                  type="text"
-                  value={formData.interest}
-                  onChange={(event) => handleChange("interest", event.target.value)}
-                />
-              </label>
-              {/* Feedback após a criação de conta. */}
+
               {feedback && (
                 <p
                   className={`rounded-2xl border px-4 py-3 text-sm text-justify md:col-span-2 ${
@@ -189,7 +172,7 @@ export default function AccountPage() {
                   {feedback.message}
                 </p>
               )}
-              {/* Ações do formulário para envio do cadastro. */}
+
               <div className="flex flex-wrap items-center gap-3 md:col-span-2">
                 <button
                   className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"

@@ -194,7 +194,7 @@ export default function AdminPollsPage() {
             <li>Inicie sessão e volte a abrir esta página.</li>
           </ol>
         </div>
-
+      </section>
     );
   }
 

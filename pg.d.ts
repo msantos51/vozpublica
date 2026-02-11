@@ -2,7 +2,7 @@
 // Define tipagens mínimas do módulo "pg" para manter segurança de tipos sem depender de @types/pg.
 declare module "pg" {
   // Representa um valor válido para parâmetros SQL parametrizados.
-  export type QueryParam = string | number | boolean | null;
+  export type QueryParam = string | number | boolean | null | string[];
 
   // Define a configuração base usada ao criar o Pool de conexões.
   export interface PoolConfig {
@@ -25,4 +25,3 @@ declare module "pg" {
     ): Promise<QueryResult<Row>>;
   }
 }
-

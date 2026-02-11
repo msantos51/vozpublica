@@ -39,3 +39,16 @@ create table if not exists polls (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Tabela com os votos reais dos utilizadores para cada poll.
+create table if not exists poll_votes (
+  id uuid primary key default gen_random_uuid(),
+  poll_id uuid not null references polls(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  option_text text not null,
+  created_at timestamptz not null default now(),
+  unique (poll_id, user_id)
+);
+
+-- Índice para acelerar consultas de agregação por votação.
+create index if not exists poll_votes_poll_id_idx on poll_votes (poll_id);

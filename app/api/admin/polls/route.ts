@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { ensureAdminAccess } from "@/lib/admin";
 import { query } from "@/lib/database";
+import { closeExpiredOpenPolls } from "@/lib/pollStatus";
 
 type PollRow = {
   id: string;
@@ -39,6 +40,8 @@ export const GET = async (request: Request) => {
   } catch (error) {
     return NextResponse.json({ message: "Acesso restrito a administradores." }, { status: 403 });
   }
+
+  await closeExpiredOpenPolls();
 
   const result = await query<PollRow>(
     `select id, title, description, prompt, options, status, starts_at, ends_at, created_at

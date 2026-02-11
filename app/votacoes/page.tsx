@@ -31,23 +31,22 @@ type StoredVote = {
 
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
-const votingStorageKey = "vp_vote_orcamento_2024";
+const votingStorageKey = "vp_vote_mundial_2026_roberto_martinez";
 
 const baseResponseCounts: Record<string, number> = {
-  "Requalificação de bairros": 12,
-  "Mobilidade urbana sustentável": 18,
-  "Espaços públicos e lazer": 9,
+  Sim: 0,
+  "Não": 0,
 };
 
 export default function VotacoesPage() {
   // Lista das votações em destaque exibidas no topo da página.
   const votingHighlights: VotingHighlight[] = [
     {
-      title: "Orçamento participativo 2024",
+      title: "Mundial 2026 e seleção nacional",
       description:
-        "Defina as prioridades de investimento para bairros, mobilidade urbana e espaços públicos.",
+        "Partilhe a sua opinião sobre o futuro da seleção nacional após o Mundial 2026.",
       status: "Aberta",
-      deadline: "Prazo: 30 de junho",
+      deadline: "Prazo: 31 de julho",
       isOpen: true,
     },
     {
@@ -68,15 +67,12 @@ export default function VotacoesPage() {
     },
   ];
 
-  // Pergunta única utilizada para recolher prioridades do orçamento participativo.
+  // Pergunta única utilizada para recolher a opinião sobre a continuidade do selecionador.
   const votingQuestion: VotingQuestion = {
-    title: "Orçamento participativo 2024",
-    prompt: "Qual deve ser a prioridade de investimento para 2024?",
-    options: [
-      "Requalificação de bairros",
-      "Mobilidade urbana sustentável",
-      "Espaços públicos e lazer",
-    ],
+    title: "Mundial 2026 e seleção nacional",
+    prompt:
+      "Se Portugal não ganhar o Mundial 2026, Roberto Martinez deverá ser substituído?",
+    options: ["Sim", "Não"],
   };
 
   // Passos resumidos da experiência de participação.
@@ -322,7 +318,7 @@ export default function VotacoesPage() {
         <section className="rounded-[32px] border border-[color:var(--primary-soft)] bg-white p-8 shadow-[0_15px_35px_rgba(182,126,232,0.12)]">
           <div className="space-y-6">
             <div className="space-y-2">
-              <p className="section-label-uppercase">Orçamento participativo 2024</p>
+              <p className="section-label-uppercase">Mundial 2026 e seleção nacional</p>
               <h2 className="section-title">{votingQuestion.prompt}</h2>
               <p className="text-sm text-zinc-600">
                 Participação disponível apenas para utilizadores com login
@@ -337,9 +333,7 @@ export default function VotacoesPage() {
                   className="space-y-4 rounded-2xl border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-6"
                 >
                   <fieldset className="space-y-3">
-                    <legend className="subsection-title">
-                      Selecione uma prioridade
-                    </legend>
+                    <legend className="subsection-title">Selecione uma opção</legend>
 
                     {votingQuestion.options.map((option) => (
                       <label

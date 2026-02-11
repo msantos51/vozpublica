@@ -126,7 +126,9 @@ export default function VotacoesPage() {
       setPollsFeedback(null);
 
       try {
+
         const response = await fetch(`/api/polls?ts=${Date.now()}`, { cache: "no-store" });
+
         const data = (await response.json()) as PollResponse;
 
         if (!response.ok) {

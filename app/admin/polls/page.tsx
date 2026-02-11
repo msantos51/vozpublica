@@ -185,6 +185,7 @@ export default function AdminPollsPage() {
         <p className="mt-3 text-sm text-slate-600">
           Esta área está disponível apenas para contas com permissões de administração.
         </p>
+
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <p className="font-semibold">Como aceder:</p>
           <ol className="mt-2 list-decimal space-y-1 pl-5">
@@ -193,7 +194,7 @@ export default function AdminPollsPage() {
             <li>Inicie sessão e volte a abrir esta página.</li>
           </ol>
         </div>
-      </section>
+
     );
   }
 

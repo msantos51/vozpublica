@@ -16,6 +16,7 @@ type LoginResponse = {
     gender: string | null;
     educationLevel: string | null;
     profileCompleted: boolean;
+    isAdmin: boolean;
   };
 };
 
@@ -29,6 +30,7 @@ type SessionUser = {
   gender: string;
   educationLevel: string;
   profileCompleted: boolean;
+  isAdmin: boolean;
 };
 
 const userStorageKey = "vp_user";
@@ -94,6 +96,7 @@ export default function LoginPage() {
           gender: data.user.gender ?? "",
           educationLevel: data.user.educationLevel ?? "",
           profileCompleted: data.user.profileCompleted,
+          isAdmin: data.user.isAdmin,
         };
 
         localStorage.setItem(sessionStorageKey, normalizedSessionUser.email);

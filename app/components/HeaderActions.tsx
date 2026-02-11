@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 type SessionUser = {
   fullName: string;
   email: string;
+  isAdmin?: boolean;
 };
 
 const userStorageKey = "vp_user";
@@ -73,6 +74,7 @@ export default function HeaderActions() {
           </div>
           <div className="text-sm">
             <p className="font-medium text-slate-900">{sessionUser.fullName}</p>
+            {sessionUser.isAdmin && <p className="text-xs text-[color:var(--primary)]">Admin</p>}
           </div>
         </Link>
       )}

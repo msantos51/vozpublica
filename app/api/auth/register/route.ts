@@ -19,6 +19,7 @@ type UserRow = {
   last_name: string;
   full_name: string;
   email: string;
+  is_admin: boolean;
   created_at: string;
 };
 
@@ -74,12 +75,14 @@ export const POST = async (request: Request) => {
   const lastName = payload.lastName.trim();
   const fullName = `${firstName} ${lastName}`.trim();
   const passwordHash = hashPassword(payload.password);
+  const firstAdminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const shouldBeAdmin = Boolean(firstAdminEmail) && normalizedEmail === firstAdminEmail;
 
   const result = await query<UserRow>(
-    `insert into users (first_name, last_name, full_name, email, national_id_hash, password_hash, profile_completed)
-     values ($1, $2, $3, $4, $5, $6, false)
-     returning id, first_name, last_name, full_name, email, created_at`,
-    [firstName, lastName, fullName, normalizedEmail, nationalIdHash, passwordHash]
+    `insert into users (first_name, last_name, full_name, email, national_id_hash, password_hash, profile_completed, is_admin)
+     values ($1, $2, $3, $4, $5, $6, false, $7)
+     returning id, first_name, last_name, full_name, email, is_admin, created_at`,
+    [firstName, lastName, fullName, normalizedEmail, nationalIdHash, passwordHash, shouldBeAdmin]
   );
 
   return NextResponse.json({
@@ -90,6 +93,7 @@ export const POST = async (request: Request) => {
       lastName: result.rows[0]?.last_name,
       fullName: result.rows[0]?.full_name,
       email: result.rows[0]?.email,
+      isAdmin: result.rows[0]?.is_admin ?? false,
     },
   });
 };

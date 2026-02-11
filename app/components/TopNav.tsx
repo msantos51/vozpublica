@@ -9,6 +9,7 @@ const navigationItems = [
   { href: "/enterprise", label: "Enterprise" },
   { href: "/contact", label: "Contacto" },
   { href: "/account", label: "Conta" },
+  { href: "/admin/polls", label: "Admin" },
 ];
 
 export default function TopNav() {

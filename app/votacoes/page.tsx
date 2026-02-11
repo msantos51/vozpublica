@@ -390,21 +390,14 @@ export default function VotacoesPage() {
                 <div className="space-y-4 rounded-2xl border border-[color:var(--primary-soft)] bg-white p-6">
                   {hasSubmitted ? (
                     <>
-                      <div className="space-y-1">
-                        <h3 className="subsection-title">Resultado parcial</h3>
-                        <p className="text-sm text-zinc-500">
-                          {totalResponses} respostas registadas
-                        </p>
-                      </div>
+                      <h3 className="subsection-title">Resultado parcial</h3>
 
                       <div className="space-y-4">
                         {chartData.map((item) => (
                           <div key={item.label} className="space-y-2">
                             <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
                               <span>{item.label}</span>
-                              <span>
-                                {item.percentage}% ({item.count})
-                              </span>
+                              <span>{item.percentage}%</span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-[color:var(--primary-soft)]">
                               <div

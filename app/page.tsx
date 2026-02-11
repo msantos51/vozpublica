@@ -1,57 +1,94 @@
 import Link from "next/link";
 
-type StackedChartCard = {
-  type: "stacked";
+import { query } from "@/lib/database";
+
+type ClosedPollRow = {
+  id: string;
   title: string;
-  primaryLabel: string;
-  primaryValue: number;
-  secondaryLabel: string;
-  secondaryValue: number;
+  options: string[];
 };
 
-type BarChartCard = {
-  type: "bar";
-  title: string;
-  bars: Array<{ label: string; value: number; color: string }>;
+type VoteCountRow = {
+  poll_id: string;
+  option_text: string;
+  total_votes: string;
 };
 
-type PieChartCard = {
-  type: "pie";
+type PollResult = {
+  id: string;
   title: string;
-  segments: Array<{ label: string; value: number; color: string }>;
+  options: Array<{
+    label: string;
+    votes: number;
+    percentage: number;
+  }>;
+  totalVotes: number;
 };
 
-type ChartCard = StackedChartCard | BarChartCard | PieChartCard;
+const buildPollResults = (
+  polls: ClosedPollRow[],
+  voteRows: VoteCountRow[]
+): PollResult[] => {
+  // Constrói os resultados finais por poll com percentagens para o bloco da home.
+  return polls.map((poll) => {
+    const pollVoteMap = poll.options.reduce<Record<string, number>>((accumulator, option) => {
+      accumulator[option] = 0;
+      return accumulator;
+    }, {});
 
-export default function HomePage() {
-  const chartCards: ChartCard[] = [
-    {
-      type: "stacked",
-      title: "Habitação acessível",
-      primaryLabel: "A favor",
-      primaryValue: 62,
-      secondaryLabel: "Contra",
-      secondaryValue: 38,
-    },
-    {
-      type: "bar",
-      title: "Transporte público gratuito",
-      bars: [
-        { label: "Sim", value: 54, color: "bg-[#fea076]" },
-        { label: "Não", value: 31, color: "bg-[#b67ee8]" },
-        { label: "Indecisos", value: 15, color: "bg-slate-300" },
-      ],
-    },
-    {
-      type: "pie",
-      title: "Mais espaços verdes",
-      segments: [
-        { label: "Prioridade alta", value: 71, color: "#b67ee8" },
-        { label: "Prioridade média", value: 19, color: "#fea076" },
-        { label: "Outros temas", value: 10, color: "#cbd5f5" },
-      ],
-    },
-  ];
+    voteRows
+      .filter((voteRow) => voteRow.poll_id === poll.id)
+      .forEach((voteRow) => {
+        if (pollVoteMap[voteRow.option_text] === undefined) {
+          return;
+        }
+
+        pollVoteMap[voteRow.option_text] = Number(voteRow.total_votes);
+      });
+
+    const totalVotes = Object.values(pollVoteMap).reduce((total, count) => total + count, 0);
+
+    return {
+      id: poll.id,
+      title: poll.title,
+      totalVotes,
+      options: poll.options.map((option) => {
+        const votes = pollVoteMap[option] ?? 0;
+        const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
+
+        return {
+          label: option,
+          votes,
+          percentage,
+        };
+      }),
+    };
+  });
+};
+
+export default async function HomePage() {
+  // Carrega as 3 votações mais recentes já encerradas para remover dados fictícios.
+  const closedPollsResult = await query<ClosedPollRow>(
+    `select id, title, options
+     from polls
+     where status = 'closed'
+     order by coalesce(ends_at, updated_at, created_at) desc
+     limit 3`
+  );
+
+  const closedPollIds = closedPollsResult.rows.map((poll) => poll.id);
+
+  const voteCountsResult = closedPollIds.length
+    ? await query<VoteCountRow>(
+        `select poll_id, option_text, count(*)::text as total_votes
+         from poll_votes
+         where poll_id = any($1::uuid[])
+         group by poll_id, option_text`,
+        [closedPollIds]
+      )
+    : { rows: [] };
+
+  const latestResults = buildPollResults(closedPollsResult.rows, voteCountsResult.rows);
 
   return (
     <section>
@@ -84,109 +121,55 @@ export default function HomePage() {
           </div>
         </article>
 
-        {/* Secção com resumo das últimas votações e gráficos de exemplo. */}
+        {/* Secção com resumo das últimas votações encerradas com resultados reais. */}
         <section className="mt-10 space-y-6">
           {/* Cabeçalho da secção com título e breve descrição. */}
           <div>
             <h2 className="section-title">Últimas Votações</h2>
             <p className="mt-2 text-sm text-justify text-slate-500">
-              Uma visão rápida das votações mais recentes — e de como a opinião
-              coletiva evolui ao longo do tempo.
+              Uma visão rápida das votações encerradas mais recentes e dos respetivos resultados.
             </p>
           </div>
 
-          {/* Grelha com três gráficos alinhados horizontalmente. */}
-          <div className="grid gap-6 md:grid-cols-3">
-            {chartCards.map((card) => (
-              <article
-                className="rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
-                key={card.title}
-              >
-                {/* Título do tema da votação. */}
-                <h3 className="subsection-title">{card.title}</h3>
+          {!latestResults.length ? (
+            <div className="rounded-[24px] border border-slate-100 bg-white p-6 text-sm text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+              Ainda não existem votações encerradas com resultados para apresentar.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-3">
+              {latestResults.map((result) => (
+                <article
+                  className="rounded-[24px] border border-slate-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
+                  key={result.id}
+                >
+                  {/* Título do tema da votação. */}
+                  <h3 className="subsection-title">{result.title}</h3>
+                  <p className="mt-1 text-xs font-medium text-slate-500">
+                    Total de votos: {result.totalVotes}
+                  </p>
 
-                {card.type === "stacked" ? (
                   <div className="mt-4 space-y-3">
-                    {/* Linha com valores da opção principal. */}
-                    <div className="flex items-center justify-between text-xs font-medium text-slate-600">
-                      <span>{card.primaryLabel}</span>
-                      <span>{card.primaryValue}%</span>
-                    </div>
-                    {/* Barra horizontal com percentagens empilhadas. */}
-                    <div className="flex h-3 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full bg-[#fea076]"
-                        style={{ width: `${card.primaryValue}%` }}
-                      />
-                      <div
-                        className="h-full bg-[#b67ee8]"
-                        style={{ width: `${card.secondaryValue}%` }}
-                      />
-                    </div>
-                    {/* Linha com valores da opção secundária. */}
-                    <div className="flex items-center justify-between text-xs font-medium text-slate-600">
-                      <span>{card.secondaryLabel}</span>
-                      <span>{card.secondaryValue}%</span>
-                    </div>
-                  </div>
-                ) : null}
-
-                {card.type === "bar" ? (
-                  <div className="mt-4 space-y-3">
-                    {/* Gráfico de barras verticais com três opções. */}
-                    <div className="flex items-end gap-3">
-                      {card.bars.map((bar) => (
-                        <div key={bar.label} className="flex flex-1 flex-col items-center gap-2">
-                          <div className="relative h-28 w-full overflow-hidden rounded-lg bg-slate-100">
-                            <div
-                              className={`absolute bottom-0 left-0 w-full rounded-lg ${bar.color}`}
-                              style={{ height: `${bar.value}%` }}
-                            />
-                          </div>
-                          <span className="text-[0.65rem] font-medium text-slate-600">
-                            {bar.label} {bar.value}%
+                    {result.options.map((option) => (
+                      <div key={option.label} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+                          <span>{option.label}</span>
+                          <span>
+                            {option.percentage}% ({option.votes})
                           </span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {card.type === "pie" ? (
-                  <div className="mt-4 flex items-center gap-4">
-                    {/* Gráfico circular com conic-gradient para as percentagens. */}
-                    <div
-                      className="h-24 w-24 rounded-full"
-                      style={{
-                        background: `conic-gradient(${card.segments
-                          .map((segment, index) => {
-                            const offset = card.segments
-                              .slice(0, index)
-                              .reduce((total, value) => total + value.value, 0);
-                            return `${segment.color} ${offset}% ${offset + segment.value}%`;
-                          })
-                          .join(", ")})`,
-                      }}
-                    />
-                    {/* Lista com a legenda do gráfico circular. */}
-                    <ul className="space-y-2 text-xs font-medium text-slate-600">
-                      {card.segments.map((segment) => (
-                        <li key={segment.label} className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: segment.color }}
+                        <div className="flex h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full bg-[color:var(--primary)]"
+                            style={{ width: `${option.percentage}%` }}
                           />
-                          <span>
-                            {segment.label} {segment.value}%
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : null}
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Bloco discreto com ligação para a área Enterprise. */}

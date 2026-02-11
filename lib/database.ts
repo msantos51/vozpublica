@@ -57,6 +57,17 @@ const initializeDatabase = async (): Promise<void> => {
         )
       `);
 
+      await pool.query(`
+        create table if not exists poll_votes (
+          id uuid primary key default gen_random_uuid(),
+          poll_id uuid not null references polls(id) on delete cascade,
+          user_id uuid not null references users(id) on delete cascade,
+          option_text text not null,
+          created_at timestamptz not null default now(),
+          unique (poll_id, user_id)
+        )
+      `);
+
       // Mantém compatibilidade com bases de dados criadas antes desta versão.
       await pool.query("alter table users add column if not exists first_name text");
       await pool.query("alter table users add column if not exists last_name text");
@@ -97,6 +108,17 @@ const initializeDatabase = async (): Promise<void> => {
         "create index if not exists polls_status_starts_at_idx on polls(status, starts_at)"
       );
 
+      await pool.query("alter table poll_votes add column if not exists poll_id uuid");
+      await pool.query("alter table poll_votes add column if not exists user_id uuid");
+      await pool.query("alter table poll_votes add column if not exists option_text text");
+      await pool.query(
+        "alter table poll_votes add column if not exists created_at timestamptz not null default now()"
+      );
+      await pool.query(
+        "create unique index if not exists poll_votes_poll_user_unique on poll_votes(poll_id, user_id)"
+      );
+      await pool.query("create index if not exists poll_votes_poll_id_idx on poll_votes(poll_id)");
+
       // Converte contas antigas para o novo formato de nome para evitar dados incompletos.
       await pool.query(`
         update users
@@ -132,7 +154,7 @@ const initializeDatabase = async (): Promise<void> => {
 // Executa queries parametrizadas para evitar SQL injection.
 export const query = async <Result>(
   text: string,
-  params: Array<string | number | boolean | null> = []
+  params: Array<string | number | boolean | null | string[]> = []
 ) => {
   await initializeDatabase();
   return pool.query<Result>(text, params);

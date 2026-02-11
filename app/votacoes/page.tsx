@@ -20,14 +20,16 @@ type PollResponse = {
   message?: string;
 };
 
+type PollVoteResponse = {
+  counts?: Record<string, number>;
+  selectedOption?: string | null;
+  hasSubmitted?: boolean;
+  message?: string;
+};
+
 type UserProfile = {
   fullName: string;
   email: string;
-};
-
-type StoredVote = {
-  email: string;
-  option: string;
 };
 
 type ChartItem = {
@@ -89,8 +91,6 @@ const formatStatus = (status: PollStatus): string => {
   return "Rascunho";
 };
 
-const getVoteStorageKey = (pollId: string): string => `vp_vote_${pollId}`;
-
 const getBaseResponseCounts = (options: string[]): Record<string, number> => {
   // Cria um mapa base de resultados para garantir todas as opções visíveis no gráfico.
   return options.reduce<Record<string, number>>((accumulator, option) => {
@@ -110,8 +110,8 @@ export default function VotacoesPage() {
   const [activePollId, setActivePollId] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
-  const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
 
   const activePoll = useMemo(
@@ -126,7 +126,6 @@ export default function VotacoesPage() {
       setPollsFeedback(null);
 
       try {
-
         const response = await fetch(`/api/polls?ts=${Date.now()}`, { cache: "no-store" });
 
         const data = (await response.json()) as PollResponse;
@@ -146,7 +145,7 @@ export default function VotacoesPage() {
         if (firstOpenPoll) {
           setActivePollId(firstOpenPoll.id);
         } else {
-          setActivePollId(null);
+          setActivePollId(loadedPolls[0]?.id ?? null);
         }
       } catch (error) {
         setPollsFeedback("Não foi possível carregar as votações. Tente novamente.");
@@ -188,11 +187,10 @@ export default function VotacoesPage() {
   }, []);
 
   useEffect(() => {
-    // Sincroniza formulário e resultado local sempre que a poll ativa ou sessão mudam.
+    // Sincroniza formulário e resultados reais sempre que a poll ativa ou sessão mudam.
     if (!activePoll) {
       setSelectedOption("");
       setResponseCounts({});
-      setStoredVote(null);
       setHasSubmitted(false);
       setConfirmationMessage(null);
       return;
@@ -203,7 +201,6 @@ export default function VotacoesPage() {
     if (!activePoll.options.length) {
       setSelectedOption("");
       setResponseCounts(baseCounts);
-      setStoredVote(null);
       setHasSubmitted(false);
       setConfirmationMessage(null);
       return;
@@ -211,39 +208,40 @@ export default function VotacoesPage() {
 
     setSelectedOption(activePoll.options[0]);
     setResponseCounts(baseCounts);
-    setStoredVote(null);
     setHasSubmitted(false);
     setConfirmationMessage(null);
 
-    if (!sessionEmail) {
-      return;
-    }
+    const loadVoteState = async () => {
+      setIsLoadingResults(true);
 
-    const voteStorageKey = getVoteStorageKey(activePoll.id);
-    const storedVoteRaw = localStorage.getItem(voteStorageKey);
+      try {
+        const queryEmail = sessionEmail ? `?email=${encodeURIComponent(sessionEmail)}` : "";
+        const response = await fetch(`/api/polls/${activePoll.id}/vote${queryEmail}`, {
+          cache: "no-store",
+        });
+        const data = (await response.json()) as PollVoteResponse;
 
-    if (!storedVoteRaw) {
-      return;
-    }
+        if (!response.ok) {
+          setConfirmationMessage(data.message ?? "Não foi possível carregar os resultados.");
+          setIsLoadingResults(false);
+          return;
+        }
 
-    try {
-      const parsedVote = JSON.parse(storedVoteRaw) as StoredVote;
+        setResponseCounts(data.counts ?? baseCounts);
 
-      if (parsedVote.email !== sessionEmail || !activePoll.options.includes(parsedVote.option)) {
-        localStorage.removeItem(voteStorageKey);
-        return;
+        if (data.selectedOption && activePoll.options.includes(data.selectedOption)) {
+          setSelectedOption(data.selectedOption);
+        }
+
+        setHasSubmitted(Boolean(data.hasSubmitted));
+      } catch (error) {
+        setConfirmationMessage("Não foi possível carregar os resultados da votação.");
+      } finally {
+        setIsLoadingResults(false);
       }
+    };
 
-      setStoredVote(parsedVote);
-      setHasSubmitted(true);
-      setSelectedOption(parsedVote.option);
-      setResponseCounts({
-        ...baseCounts,
-        [parsedVote.option]: (baseCounts[parsedVote.option] ?? 0) + 1,
-      });
-    } catch (error) {
-      localStorage.removeItem(voteStorageKey);
-    }
+    loadVoteState();
   }, [activePoll, sessionEmail]);
 
   const totalResponses = useMemo(() => {
@@ -269,7 +267,7 @@ export default function VotacoesPage() {
 
   const isActivePollOpen = activePoll?.status === "open";
   const canParticipate = isLoggedIn && isActivePollOpen;
-  const isFormLocked = hasSubmitted && Boolean(storedVote);
+  const isFormLocked = hasSubmitted;
 
   const handleOpenParticipation = (pollId: string) => {
     // Ativa a poll escolhida no cartão para abrir o formulário de participação.
@@ -277,7 +275,7 @@ export default function VotacoesPage() {
     setConfirmationMessage(null);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!activePoll) {
@@ -305,20 +303,29 @@ export default function VotacoesPage() {
       return;
     }
 
-    setResponseCounts((previous) => ({
-      ...previous,
-      [selectedOption]: (previous[selectedOption] ?? 0) + 1,
-    }));
+    try {
+      const response = await fetch(`/api/polls/${activePoll.id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: sessionEmail,
+          option: selectedOption,
+        }),
+      });
 
-    const nextVote: StoredVote = {
-      email: sessionEmail,
-      option: selectedOption,
-    };
+      const data = (await response.json()) as PollVoteResponse;
 
-    localStorage.setItem(getVoteStorageKey(activePoll.id), JSON.stringify(nextVote));
-    setStoredVote(nextVote);
-    setHasSubmitted(true);
-    setConfirmationMessage("Resposta registada com sucesso.");
+      if (!response.ok) {
+        setConfirmationMessage(data.message ?? "Não foi possível registar a resposta.");
+        return;
+      }
+
+      setResponseCounts(data.counts ?? responseCounts);
+      setHasSubmitted(Boolean(data.hasSubmitted));
+      setConfirmationMessage(data.message ?? "Resposta registada com sucesso.");
+    } catch (error) {
+      setConfirmationMessage("Não foi possível registar a resposta. Tente novamente.");
+    }
   };
 
   return (
@@ -387,10 +394,10 @@ export default function VotacoesPage() {
                 ) : (
                   <button
                     type="button"
-                    disabled
-                    className="button-size-login w-full cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400"
+                    onClick={() => handleOpenParticipation(poll.id)}
+                    className="button-size-login w-full border border-zinc-200 bg-zinc-100 text-zinc-500 transition hover:brightness-95"
                   >
-                    Participação indisponível
+                    Ver resultado
                   </button>
                 )}
               </div>
@@ -402,7 +409,7 @@ export default function VotacoesPage() {
           <div className="space-y-6">
             <div className="space-y-2">
               <p className="section-label-uppercase">Participação</p>
-              <h2 className="section-title">{activePoll?.prompt ?? "Selecione uma votação aberta"}</h2>
+              <h2 className="section-title">{activePoll?.prompt ?? "Selecione uma votação"}</h2>
               <p className="text-sm text-zinc-600">
                 Participação disponível apenas para utilizadores com login efetuado e para votações
                 em estado aberto.
@@ -463,16 +470,24 @@ export default function VotacoesPage() {
                 </form>
 
                 <div className="space-y-4 rounded-2xl border border-[color:var(--primary-soft)] bg-white p-6">
-                  {hasSubmitted ? (
+                  {isLoadingResults ? (
+                    <div className="rounded-2xl border border-dashed border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4 text-sm text-[color:var(--primary)]">
+                      A carregar resultados...
+                    </div>
+                  ) : (
                     <>
-                      <h3 className="subsection-title">Resultado parcial</h3>
+                      <h3 className="subsection-title">
+                        {activePoll.status === "closed" ? "Resultado final" : "Resultado parcial"}
+                      </h3>
 
                       <div className="space-y-4">
                         {chartData.map((item) => (
                           <div key={item.label} className="space-y-2">
                             <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
                               <span>{item.label}</span>
-                              <span>{item.percentage}%</span>
+                              <span>
+                                {item.percentage}% ({item.count})
+                              </span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-[color:var(--primary-soft)]">
                               <div
@@ -484,16 +499,12 @@ export default function VotacoesPage() {
                         ))}
                       </div>
                     </>
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4 text-sm text-[color:var(--primary)]">
-                      Submeta a sua resposta para ver os resultados atuais.
-                    </div>
                   )}
                 </div>
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4 text-sm text-[color:var(--primary)]">
-                Quando existir uma votação aberta, selecione o cartão para participar.
+                Quando existir uma votação, selecione o cartão para participar ou consultar resultados.
               </p>
             )}
           </div>

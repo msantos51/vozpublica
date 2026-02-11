@@ -195,7 +195,6 @@ export default function AdminPollsPage() {
           </ol>
         </div>
 
-      </section>
     );
   }
 

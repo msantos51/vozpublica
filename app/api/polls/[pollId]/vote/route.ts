@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
+import { closeExpiredOpenPolls } from "@/lib/pollStatus";
 
 type VotePayload = {
   email: string;
@@ -50,6 +51,8 @@ export const GET = async (
 ) => {
   // Devolve os totais reais da votação e indica se o utilizador já respondeu.
   const { pollId } = await params;
+
+  await closeExpiredOpenPolls();
   const { searchParams } = new URL(request.url);
   const email = searchParams.get("email")?.trim().toLowerCase();
 
@@ -102,6 +105,8 @@ export const POST = async (
   // Regista o voto do utilizador autenticado e impede votos duplicados por votação.
   const payload = (await request.json()) as VotePayload;
   const { pollId } = await params;
+
+  await closeExpiredOpenPolls();
 
   if (!payload.email || !payload.option) {
     return NextResponse.json({ message: "E-mail e opção são obrigatórios." }, { status: 400 });

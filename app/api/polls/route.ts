@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
+import { closeExpiredOpenPolls } from "@/lib/pollStatus";
 
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,8 @@ export const GET = async () => {
   // Desativa cache estática para devolver sempre o estado mais recente das polls.
 
   // Devolve apenas polls que podem ser exibidas ao público (abertas ou encerradas).
+  await closeExpiredOpenPolls();
+
   const result = await query<PollRow>(
     `select id, title, description, prompt, options, status, starts_at, ends_at
      from polls

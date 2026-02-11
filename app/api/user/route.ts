@@ -13,6 +13,7 @@ type UserRow = {
   gender: string | null;
   education_level: string | null;
   profile_completed: boolean;
+  is_admin: boolean;
 };
 
 type UpdatePayload = {
@@ -50,7 +51,7 @@ export const GET = async (request: Request) => {
 
   const normalizedEmail = email.trim().toLowerCase();
   const result = await query<UserRow>(
-    "select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed from users where email = $1",
+    "select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed, is_admin from users where email = $1",
     [normalizedEmail]
   );
 
@@ -70,6 +71,7 @@ export const GET = async (request: Request) => {
       gender: result.rows[0].gender,
       educationLevel: result.rows[0].education_level,
       profileCompleted: result.rows[0].profile_completed,
+      isAdmin: result.rows[0].is_admin,
     },
   });
 };

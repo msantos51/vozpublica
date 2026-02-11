@@ -68,8 +68,8 @@ export default function AccountPage() {
         return;
       }
 
-      setFeedback({ type: "success", message: data.message });
-      router.push("/login");
+      setFeedback({ type: "success", message: "Registo efetuado com sucesso." });
+      router.push("/login?registered=1");
     } catch (error) {
       setFeedback({
         type: "error",
@@ -97,9 +97,6 @@ export default function AccountPage() {
             <div>
               <p className="section-label">Criar conta</p>
               <h2 className="mt-2 section-title">Registo rápido e seguro.</h2>
-              <p className="mt-2 text-sm text-justify text-slate-500">
-                Indique primeiro nome, último nome, e-mail, NIF e senha para criar o acesso.
-              </p>
             </div>
 
             <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>

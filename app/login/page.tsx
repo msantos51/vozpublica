@@ -42,6 +42,13 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    const urlParameters = new URLSearchParams(window.location.search);
+
+    if (urlParameters.get("registered") === "1") {
+      // Exibe a confirmação de registo ao chegar da página de criação de conta.
+      setFeedback("Registo efetuado com sucesso.");
+    }
+
     // Mantém o utilizador autenticado ao regressar ao ecrã de login.
     const storedSession = localStorage.getItem(sessionStorageKey);
     const storedUser = localStorage.getItem(userStorageKey);

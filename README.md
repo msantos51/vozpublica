@@ -34,3 +34,37 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+## Acesso de administrador (polls)
+
+Para aceder ao painel `/admin/polls`, é necessário ter uma conta com permissão de admin.
+
+### 1) Configurar o e-mail admin
+
+Defina a variável de ambiente `ADMIN_EMAIL` com o e-mail que deve ser administrador:
+
+```bash
+ADMIN_EMAIL=admin@vozpublica.pt
+```
+
+### 2) Criar conta com esse e-mail
+
+No registo (`/account`), crie a conta com exatamente o mesmo e-mail definido em `ADMIN_EMAIL`.
+
+### 3) Iniciar sessão
+
+Faça login com essa conta em `/login`. O sistema devolve `isAdmin: true` para essa sessão.
+
+### 4) Abrir o painel admin
+
+Aceda a:
+
+```
+/admin/polls
+```
+
+No painel é possível:
+- criar polls;
+- definir datas de abertura e fecho;
+- alterar estado (`draft`, `open`, `closed`).

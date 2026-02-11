@@ -185,6 +185,16 @@ export default function AdminPollsPage() {
         <p className="mt-3 text-sm text-slate-600">
           Esta área está disponível apenas para contas com permissões de administração.
         </p>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          <p className="font-semibold">Como aceder:</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5">
+            <li>Defina a variável de ambiente <code>ADMIN_EMAIL</code> com o e-mail de administrador.</li>
+            <li>Registe (ou use) uma conta com esse mesmo e-mail.</li>
+            <li>Inicie sessão e volte a abrir esta página.</li>
+          </ol>
+        </div>
+
       </section>
     );
   }

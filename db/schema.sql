@@ -1,7 +1,7 @@
 -- Cria extensões necessárias para gerar UUIDs.
 create extension if not exists "pgcrypto";
 
--- Tabela de utilizadores com dados básicos do perfil.
+-- Tabela de utilizadores com dados básicos do perfil e permissão de administração.
 create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   first_name text not null,
@@ -12,6 +12,10 @@ create table if not exists users (
   birth_date date,
   city text,
   interest text,
+  gender text,
+  education_level text,
+  profile_completed boolean not null default false,
+  is_admin boolean not null default false,
   password_hash text not null,
   created_at timestamptz not null default now()
 );
@@ -20,3 +24,18 @@ create table if not exists users (
 create unique index if not exists users_national_id_hash_unique
   on users (national_id_hash)
   where national_id_hash is not null;
+
+-- Tabela de polls para gestão pelo painel de administração.
+create table if not exists polls (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text not null,
+  prompt text not null,
+  options jsonb not null,
+  status text not null default 'draft',
+  starts_at timestamptz,
+  ends_at timestamptz,
+  created_by uuid references users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);

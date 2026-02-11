@@ -2,26 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type VotingHighlight = {
+type PollStatus = "draft" | "open" | "closed";
+
+type Poll = {
+  id: string;
   title: string;
   description: string;
-  status: string;
-  deadline: string;
-  isOpen: boolean;
-};
-
-type VotingQuestion = {
-  title: string;
   prompt: string;
   options: string[];
+  status: PollStatus;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
+type PollResponse = {
+  polls?: Poll[];
+  message?: string;
 };
 
 type UserProfile = {
   fullName: string;
   email: string;
-  city: string;
-  interest: string;
-  password: string;
 };
 
 type StoredVote = {
@@ -29,276 +30,357 @@ type StoredVote = {
   option: string;
 };
 
+type ChartItem = {
+  label: string;
+  count: number;
+  percentage: number;
+};
+
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
-const votingStorageKey = "vp_vote_mundial_2026_roberto_martinez";
 
-const baseResponseCounts: Record<string, number> = {
-  Sim: 0,
-  "Não": 0,
+const votingSteps = [
+  {
+    title: "1. Informar",
+    description:
+      "Analise os documentos e dados disponibilizados antes de escolher uma opção.",
+  },
+  {
+    title: "2. Participar",
+    description: "Registe o seu voto com segurança e acompanhe o impacto em tempo real.",
+  },
+  {
+    title: "3. Acompanhar",
+    description: "Receba atualizações sobre a implementação das decisões votadas.",
+  },
+];
+
+const formatDateTime = (value: string | null): string => {
+  // Formata datas ISO da API para leitura simples no idioma do utilizador.
+  if (!value) {
+    return "Sem data definida";
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Data inválida";
+  }
+
+  return parsedDate.toLocaleString("pt-PT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatStatus = (status: PollStatus): string => {
+  // Traduz os estados técnicos para etiquetas amigáveis da interface.
+  if (status === "open") {
+    return "Aberta";
+  }
+
+  if (status === "closed") {
+    return "Fechada";
+  }
+
+  return "Rascunho";
+};
+
+const getVoteStorageKey = (pollId: string): string => `vp_vote_${pollId}`;
+
+const getBaseResponseCounts = (options: string[]): Record<string, number> => {
+  // Cria um mapa base de resultados para garantir todas as opções visíveis no gráfico.
+  return options.reduce<Record<string, number>>((accumulator, option) => {
+    accumulator[option] = 0;
+    return accumulator;
+  }, {});
 };
 
 export default function VotacoesPage() {
-  // Lista das votações em destaque exibidas no topo da página.
-  const votingHighlights: VotingHighlight[] = [
-    {
-      title: "Mundial 2026 e seleção nacional",
-      description:
-        "Partilhe a sua opinião sobre o futuro da seleção nacional após o Mundial 2026.",
-      status: "Aberta",
-      deadline: "Prazo: 31 de julho",
-      isOpen: true,
-    },
-    {
-      title: "Plano municipal de sustentabilidade",
-      description:
-        "Contribua com sugestões para reduzir emissões e ampliar a reciclagem na cidade.",
-      status: "Em consulta",
-      deadline: "Prazo: 18 de julho",
-      isOpen: false,
-    },
-    {
-      title: "Programa de juventude e emprego",
-      description:
-        "Vote em propostas que fortalecem formação profissional e oportunidades locais.",
-      status: "A iniciar",
-      deadline: "Abre em 5 dias",
-      isOpen: false,
-    },
-  ];
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [isLoadingPolls, setIsLoadingPolls] = useState(true);
+  const [pollsFeedback, setPollsFeedback] = useState<string | null>(null);
 
-  // Pergunta única utilizada para recolher a opinião sobre a continuidade do selecionador.
-  const votingQuestion: VotingQuestion = {
-    title: "Mundial 2026 e seleção nacional",
-    prompt:
-      "Se Portugal não ganhar o Mundial 2026, Roberto Martinez deverá ser substituído?",
-    options: ["Sim", "Não"],
-  };
-
-  // Passos resumidos da experiência de participação.
-  const votingSteps = [
-    {
-      title: "1. Informar",
-      description:
-        "Analise os documentos e dados disponibilizados antes de escolher uma opção.",
-    },
-    {
-      title: "2. Participar",
-      description:
-        "Registe o seu voto com segurança e acompanhe o impacto em tempo real.",
-    },
-    {
-      title: "3. Acompanhar",
-      description:
-        "Receba atualizações sobre a implementação das decisões votadas.",
-    },
-  ];
-
-  // Controla se o utilizador abriu o painel de participação da votação aberta.
-  const [isParticipationOpen, setIsParticipationOpen] = useState(false);
-
-  // Guarda o estado de login para permitir ou bloquear a participação.
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Guarda o email do utilizador autenticado para limitar um voto por conta.
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
 
-  // Guarda a opção selecionada no formulário.
-  const [selectedOption, setSelectedOption] = useState<string>(
-    votingQuestion.options[0]
-  );
-
-  // Armazena a contagem de respostas locais para simular recolha de dados.
-  const [responseCounts, setResponseCounts] = useState<Record<string, number>>(
-    baseResponseCounts
-  );
-
-  // Guarda a resposta previamente registada para impedir alterações.
+  const [activePollId, setActivePollId] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
-
-  // Indica se o utilizador já submeteu a resposta para bloquear novas submissões.
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
 
-  // Mensagem de confirmação exibida após o envio da resposta.
-  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(
-    null
+  const activePoll = useMemo(
+    () => polls.find((poll) => poll.id === activePollId) ?? null,
+    [polls, activePollId]
   );
 
   useEffect(() => {
-    // Lê a sessão atual e a resposta guardada para sincronizar a experiência.
+    // Carrega as polls públicas (abertas/fechadas) para renderizar a página de votações.
+    const loadPolls = async () => {
+      setIsLoadingPolls(true);
+      setPollsFeedback(null);
+
+      try {
+        const response = await fetch("/api/polls");
+        const data = (await response.json()) as PollResponse;
+
+        if (!response.ok) {
+          setPollsFeedback(data.message ?? "Não foi possível carregar as votações.");
+          setPolls([]);
+          setIsLoadingPolls(false);
+          return;
+        }
+
+        const loadedPolls = data.polls ?? [];
+        setPolls(loadedPolls);
+
+        const firstOpenPoll = loadedPolls.find((poll) => poll.status === "open") ?? null;
+
+        if (firstOpenPoll) {
+          setActivePollId(firstOpenPoll.id);
+        } else {
+          setActivePollId(null);
+        }
+      } catch (error) {
+        setPollsFeedback("Não foi possível carregar as votações. Tente novamente.");
+        setPolls([]);
+      } finally {
+        setIsLoadingPolls(false);
+      }
+    };
+
+    loadPolls();
+  }, []);
+
+  useEffect(() => {
+    // Lê a sessão atual para controlar quem pode participar nas polls abertas.
     const storedSession = localStorage.getItem(sessionStorageKey);
     const storedUser = localStorage.getItem(userStorageKey);
 
     if (!storedSession || !storedUser) {
       setIsLoggedIn(false);
       setSessionEmail(null);
-      setStoredVote(null);
-      setHasSubmitted(false);
-      setResponseCounts(baseResponseCounts);
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser) as UserProfile;
+    try {
+      const parsedUser = JSON.parse(storedUser) as UserProfile;
 
-    if (parsedUser.email !== storedSession) {
+      if (parsedUser.email !== storedSession) {
+        setIsLoggedIn(false);
+        setSessionEmail(null);
+        return;
+      }
+
+      setIsLoggedIn(true);
+      setSessionEmail(parsedUser.email);
+    } catch (error) {
       setIsLoggedIn(false);
       setSessionEmail(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Sincroniza formulário e resultado local sempre que a poll ativa ou sessão mudam.
+    if (!activePoll) {
+      setSelectedOption("");
+      setResponseCounts({});
       setStoredVote(null);
       setHasSubmitted(false);
-      setResponseCounts(baseResponseCounts);
+      setConfirmationMessage(null);
       return;
     }
 
-    setIsLoggedIn(true);
-    setSessionEmail(parsedUser.email);
+    const baseCounts = getBaseResponseCounts(activePoll.options);
 
-    const storedVoteRaw = localStorage.getItem(votingStorageKey);
+    if (!activePoll.options.length) {
+      setSelectedOption("");
+      setResponseCounts(baseCounts);
+      setStoredVote(null);
+      setHasSubmitted(false);
+      setConfirmationMessage(null);
+      return;
+    }
+
+    setSelectedOption(activePoll.options[0]);
+    setResponseCounts(baseCounts);
+    setStoredVote(null);
+    setHasSubmitted(false);
+    setConfirmationMessage(null);
+
+    if (!sessionEmail) {
+      return;
+    }
+
+    const voteStorageKey = getVoteStorageKey(activePoll.id);
+    const storedVoteRaw = localStorage.getItem(voteStorageKey);
 
     if (!storedVoteRaw) {
-      setStoredVote(null);
-      setHasSubmitted(false);
-      setResponseCounts(baseResponseCounts);
       return;
     }
 
-    const parsedVote = JSON.parse(storedVoteRaw) as StoredVote;
+    try {
+      const parsedVote = JSON.parse(storedVoteRaw) as StoredVote;
 
-    if (parsedVote.email !== parsedUser.email) {
-      setStoredVote(null);
-      setHasSubmitted(false);
-      setResponseCounts(baseResponseCounts);
-      return;
+      if (parsedVote.email !== sessionEmail || !activePoll.options.includes(parsedVote.option)) {
+        localStorage.removeItem(voteStorageKey);
+        return;
+      }
+
+      setStoredVote(parsedVote);
+      setHasSubmitted(true);
+      setSelectedOption(parsedVote.option);
+      setResponseCounts({
+        ...baseCounts,
+        [parsedVote.option]: (baseCounts[parsedVote.option] ?? 0) + 1,
+      });
+    } catch (error) {
+      localStorage.removeItem(voteStorageKey);
     }
-
-    setStoredVote(parsedVote);
-    setSelectedOption(parsedVote.option);
-    setHasSubmitted(true);
-
-    // Aplica a simulação: base + 1 voto do utilizador
-    setResponseCounts({
-      ...baseResponseCounts,
-      [parsedVote.option]: (baseResponseCounts[parsedVote.option] ?? 0) + 1,
-    });
-  }, [votingQuestion.options]);
+  }, [activePoll, sessionEmail]);
 
   const totalResponses = useMemo(() => {
-    return Object.values(responseCounts).reduce(
-      (total, count) => total + count,
-      0
-    );
+    return Object.values(responseCounts).reduce((total, count) => total + count, 0);
   }, [responseCounts]);
 
-  const chartData = useMemo(() => {
-    return votingQuestion.options.map((option) => {
+  const chartData = useMemo<ChartItem[]>(() => {
+    if (!activePoll) {
+      return [];
+    }
+
+    return activePoll.options.map((option) => {
       const count = responseCounts[option] ?? 0;
-      const percentage = totalResponses
-        ? Math.round((count / totalResponses) * 100)
-        : 0;
+      const percentage = totalResponses ? Math.round((count / totalResponses) * 100) : 0;
+
       return {
         label: option,
         count,
         percentage,
       };
     });
-  }, [responseCounts, totalResponses, votingQuestion.options]);
+  }, [activePoll, responseCounts, totalResponses]);
 
-  const handleParticipationToggle = () => {
-    setIsParticipationOpen((previous) => !previous);
+  const isActivePollOpen = activePoll?.status === "open";
+  const canParticipate = isLoggedIn && isActivePollOpen;
+  const isFormLocked = hasSubmitted && Boolean(storedVote);
+
+  const handleOpenParticipation = (pollId: string) => {
+    // Ativa a poll escolhida no cartão para abrir o formulário de participação.
+    setActivePollId(pollId);
     setConfirmationMessage(null);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!activePoll) {
+      setConfirmationMessage("Selecione uma votação para participar.");
+      return;
+    }
+
     if (!isLoggedIn || !sessionEmail) {
       setConfirmationMessage("Faça login para poder participar.");
       return;
     }
 
-    // Bloqueia a alteração caso o utilizador já tenha submetido a resposta.
-    if (hasSubmitted && storedVote) {
-      setConfirmationMessage(
-        "A sua resposta já foi submetida e não pode ser alterada."
-      );
+    if (!isActivePollOpen) {
+      setConfirmationMessage("Esta votação está encerrada e não aceita novas respostas.");
       return;
     }
 
-    // Atualiza contagens de forma consistente para uma submissão inicial.
-    setResponseCounts((previous) => {
-      const nextCounts = { ...previous };
+    if (isFormLocked) {
+      setConfirmationMessage("A sua resposta já foi submetida e não pode ser alterada.");
+      return;
+    }
 
-      nextCounts[selectedOption] = (nextCounts[selectedOption] ?? 0) + 1;
+    if (!selectedOption) {
+      setConfirmationMessage("Selecione uma opção para continuar.");
+      return;
+    }
 
-      return nextCounts;
-    });
+    setResponseCounts((previous) => ({
+      ...previous,
+      [selectedOption]: (previous[selectedOption] ?? 0) + 1,
+    }));
 
     const nextVote: StoredVote = {
       email: sessionEmail,
       option: selectedOption,
     };
 
-    localStorage.setItem(votingStorageKey, JSON.stringify(nextVote));
+    localStorage.setItem(getVoteStorageKey(activePoll.id), JSON.stringify(nextVote));
     setStoredVote(nextVote);
     setHasSubmitted(true);
-
     setConfirmationMessage("Resposta registada com sucesso.");
   };
 
-  const isOpenVoting = votingHighlights[0]?.isOpen ?? false;
-  const canParticipate = isLoggedIn && isOpenVoting;
-  const hasStoredVote = Boolean(storedVote);
-  const isFormLocked = hasSubmitted && hasStoredVote;
-
   return (
     <section className="space-y-10">
-      {/* Área principal com largura máxima e espaçamento entre blocos. */}
       <div className="mx-auto w-full max-w-5xl space-y-10">
-        {/* Cabeçalho com resumo da experiência de votações. */}
         <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="space-y-4">
             <p className="section-label-uppercase">Participação ativa</p>
             <h1 className="page-title">Votações</h1>
             <p className="text-base leading-7 text-justify text-zinc-600">
-              Acompanhe as consultas públicas em aberto, participe nas decisões
-              locais e veja como a sua escolha impacta o planeamento urbano.
+              Acompanhe as consultas públicas em aberto, participe nas decisões locais e veja como a
+              sua escolha impacta o planeamento urbano.
             </p>
           </div>
         </header>
 
-        {/* Destaques das votações em cartões com status. */}
+        {isLoadingPolls ? (
+          <p className="rounded-2xl bg-white p-4 text-sm text-zinc-600 shadow-sm">A carregar votações...</p>
+        ) : null}
+
+        {pollsFeedback ? (
+          <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+            {pollsFeedback}
+          </p>
+        ) : null}
+
+        {!isLoadingPolls && !polls.length ? (
+          <p className="rounded-2xl border border-[color:var(--primary-soft)] bg-white p-4 text-sm text-zinc-600">
+            Ainda não existem votações públicas. No painel admin, altere a poll para estado
+            <strong> Aberta</strong> ou <strong>Fechada</strong> para aparecer aqui.
+          </p>
+        ) : null}
+
         <div className="grid gap-6 lg:grid-cols-3">
-          {votingHighlights.map((voting) => (
-            <article key={voting.title} className="card">
+          {polls.map((poll) => (
+            <article key={poll.id} className="card">
               <div className="bg" />
               <div className="blob" />
               <div className="card-content space-y-4">
                 <div className="space-y-2">
-                  <h2 className="card-title">{voting.title}</h2>
-                  <p className="text-sm leading-6 text-justify text-zinc-600">
-                    {voting.description}
-                  </p>
+                  <h2 className="card-title">{poll.title}</h2>
+                  <p className="text-sm leading-6 text-justify text-zinc-600">{poll.description}</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-[color:var(--primary-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--primary)]">
-                    {voting.status}
+                    {formatStatus(poll.status)}
                   </span>
                   <span className="text-xs font-medium text-zinc-500">
-                    {voting.deadline}
+                    Prazo: {formatDateTime(poll.ends_at)}
                   </span>
                 </div>
 
-                {voting.isOpen ? (
+                {poll.status === "open" ? (
                   <button
                     type="button"
-                    onClick={handleParticipationToggle}
+                    onClick={() => handleOpenParticipation(poll.id)}
                     className="button-size-login w-full border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] text-[color:var(--primary)] transition hover:brightness-95"
                   >
-                    {isParticipationOpen
-                      ? "Fechar votação"
-                      : isLoggedIn
-                        ? "Participar (Aberta)"
-                        : "Login para participar"}
+                    {activePollId === poll.id
+                      ? isLoggedIn
+                        ? "Votação selecionada"
+                        : "Selecionada (faça login)"
+                      : "Participar (Aberta)"}
                   </button>
                 ) : (
                   <button
@@ -314,19 +396,18 @@ export default function VotacoesPage() {
           ))}
         </div>
 
-        {/* Bloco interativo para recolher dados da votação aberta. */}
         <section className="rounded-[32px] border border-[color:var(--primary-soft)] bg-white p-8 shadow-[0_15px_35px_rgba(182,126,232,0.12)]">
           <div className="space-y-6">
             <div className="space-y-2">
-              <p className="section-label-uppercase">Mundial 2026 e seleção nacional</p>
-              <h2 className="section-title">{votingQuestion.prompt}</h2>
+              <p className="section-label-uppercase">Participação</p>
+              <h2 className="section-title">{activePoll?.prompt ?? "Selecione uma votação aberta"}</h2>
               <p className="text-sm text-zinc-600">
-                Participação disponível apenas para utilizadores com login
-                efetuado.
+                Participação disponível apenas para utilizadores com login efetuado e para votações
+                em estado aberto.
               </p>
             </div>
 
-            {isParticipationOpen ? (
+            {activePoll ? (
               <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <form
                   onSubmit={handleSubmit}
@@ -335,14 +416,14 @@ export default function VotacoesPage() {
                   <fieldset className="space-y-3">
                     <legend className="subsection-title">Selecione uma opção</legend>
 
-                    {votingQuestion.options.map((option) => (
+                    {activePoll.options.map((option) => (
                       <label
                         key={option}
                         className="flex items-center gap-3 rounded-xl border border-[color:var(--primary-soft)] bg-white p-3 text-sm text-zinc-700 shadow-sm"
                       >
                         <input
                           type="radio"
-                          name="priority"
+                          name="poll_option"
                           value={option}
                           checked={selectedOption === option}
                           onChange={() => setSelectedOption(option)}
@@ -363,14 +444,12 @@ export default function VotacoesPage() {
                   </button>
 
                   {confirmationMessage ? (
-                    <p className="text-sm font-medium text-green-600">
-                      {confirmationMessage}
-                    </p>
+                    <p className="text-sm font-medium text-green-600">{confirmationMessage}</p>
                   ) : null}
 
                   {!canParticipate ? (
                     <p className="text-sm text-[color:var(--primary)]">
-                      É necessário ter login ativo para votar.
+                      É necessário ter login ativo e votação aberta para participar.
                     </p>
                   ) : null}
 
@@ -412,8 +491,7 @@ export default function VotacoesPage() {
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4 text-sm text-[color:var(--primary)]">
-                Clique no botão "Participar (Aberta)" para responder e acompanhar
-                o gráfico de resultados.
+                Quando existir uma votação aberta, selecione o cartão para participar.
               </p>
             )}
           </div>
@@ -425,12 +503,8 @@ export default function VotacoesPage() {
             <div className="grid gap-6 md:grid-cols-3">
               {votingSteps.map((step) => (
                 <div key={step.title} className="space-y-2">
-                  <h3 className="subsection-title text-[color:var(--primary)]">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm leading-6 text-justify text-zinc-600">
-                    {step.description}
-                  </p>
+                  <h3 className="subsection-title text-[color:var(--primary)]">{step.title}</h3>
+                  <p className="text-sm leading-6 text-justify text-zinc-600">{step.description}</p>
                 </div>
               ))}
             </div>

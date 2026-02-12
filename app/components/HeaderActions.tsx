@@ -55,7 +55,7 @@ export default function HeaderActions() {
   }, []);
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex w-full items-center justify-start gap-4 md:w-auto md:justify-end">
       {!sessionUser && (
         <Link
           className="button-size-login border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
@@ -66,14 +66,15 @@ export default function HeaderActions() {
       )}
       {sessionUser && (
         <Link
-          className="flex items-center gap-3 rounded-full bg-[color:var(--surface)] px-4 py-2 shadow-sm"
+          className="flex max-w-full items-center gap-3 rounded-full bg-[color:var(--surface)] px-4 py-2 shadow-sm"
           href="/dashboard"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-[color:var(--primary)] text-[10px] font-semibold text-[color:var(--primary)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-[color:var(--primary)] text-[10px] font-semibold text-[color:var(--primary)]">
             {profileInitials}
           </div>
-          <div className="text-sm">
-            <p className="font-medium text-slate-900">{sessionUser.fullName}</p>
+          {/* Limita o bloco textual no mobile para impedir que nomes longos quebrem o cabeçalho. */}
+          <div className="min-w-0 text-sm">
+            <p className="truncate font-medium text-slate-900">{sessionUser.fullName}</p>
             {sessionUser.isAdmin && <p className="text-xs text-[color:var(--primary)]">Admin</p>}
           </div>
         </Link>

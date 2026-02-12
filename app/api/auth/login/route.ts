@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
 import { verifyPassword } from "@/lib/password";
+import { createSession } from "@/lib/session";
 
 type LoginPayload = {
   email: string;
@@ -50,6 +51,12 @@ export const POST = async (request: Request) => {
       { status: 401 }
     );
   }
+
+  await createSession({
+    userId: user.id,
+    email: user.email,
+    isAdmin: user.is_admin,
+  });
 
   return NextResponse.json({
     message: "Login efetuado com sucesso.",

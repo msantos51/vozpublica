@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
 import { closeExpiredOpenPolls } from "@/lib/pollStatus";
+import { getSession } from "@/lib/session";
 
 type VotePayload = {
-  email: string;
   option: string;
 };
 
@@ -12,10 +12,6 @@ type PollRow = {
   id: string;
   options: string[];
   status: "draft" | "open" | "closed";
-};
-
-type UserRow = {
-  id: string;
 };
 
 type VoteCountRow = {
@@ -49,12 +45,11 @@ export const GET = async (
   request: Request,
   { params }: { params: Promise<{ pollId: string }> }
 ) => {
-  // Devolve os totais reais da votação e indica se o utilizador já respondeu.
+  // Devolve os totais da votação e, se autenticado, o estado do voto do utilizador.
   const { pollId } = await params;
 
   await closeExpiredOpenPolls();
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get("email")?.trim().toLowerCase();
+  const session = await getSession();
 
   const pollResult = await query<PollRow>(
     "select id, options, status from polls where id = $1",
@@ -77,14 +72,13 @@ export const GET = async (
 
   let selectedOption: string | null = null;
 
-  if (email) {
+  if (session?.userId) {
     const existingVoteResult = await query<ExistingVoteRow>(
-      `select pv.option_text
-       from poll_votes pv
-       inner join users u on u.id = pv.user_id
-       where pv.poll_id = $1 and lower(u.email) = $2
+      `select option_text
+       from poll_votes
+       where poll_id = $1 and user_id = $2
        limit 1`,
-      [pollId, email]
+      [pollId, session.userId]
     );
 
     selectedOption = existingVoteResult.rows[0]?.option_text ?? null;
@@ -102,17 +96,21 @@ export const POST = async (
   request: Request,
   { params }: { params: Promise<{ pollId: string }> }
 ) => {
-  // Regista o voto do utilizador autenticado e impede votos duplicados por votação.
+  // Regista o voto para a sessão autenticada e impede votos duplicados por utilizador.
+  const session = await getSession();
+
+  if (!session?.userId) {
+    return NextResponse.json({ message: "Faça login para participar." }, { status: 401 });
+  }
+
   const payload = (await request.json()) as VotePayload;
   const { pollId } = await params;
 
   await closeExpiredOpenPolls();
 
-  if (!payload.email || !payload.option) {
-    return NextResponse.json({ message: "E-mail e opção são obrigatórios." }, { status: 400 });
+  if (!payload.option) {
+    return NextResponse.json({ message: "Selecione uma opção válida." }, { status: 400 });
   }
-
-  const normalizedEmail = payload.email.trim().toLowerCase();
 
   const pollResult = await query<PollRow>(
     "select id, options, status from polls where id = $1",
@@ -136,22 +134,11 @@ export const POST = async (
     return NextResponse.json({ message: "Opção inválida para esta votação." }, { status: 400 });
   }
 
-  const userResult = await query<UserRow>(
-    "select id from users where lower(email) = $1",
-    [normalizedEmail]
-  );
-
-  const user = userResult.rows[0];
-
-  if (!user) {
-    return NextResponse.json({ message: "Utilizador não encontrado." }, { status: 404 });
-  }
-
   const insertResult = await query(
     `insert into poll_votes (poll_id, user_id, option_text)
      values ($1, $2, $3)
      on conflict (poll_id, user_id) do nothing`,
-    [pollId, user.id, payload.option]
+    [pollId, session.userId, payload.option]
   );
 
   if (!insertResult.rowCount) {

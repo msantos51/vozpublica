@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { ensureAdminAccess } from "@/lib/admin";
 import { query } from "@/lib/database";
 import { closeExpiredOpenPolls } from "@/lib/pollStatus";
+import { getSession } from "@/lib/session";
 
 type PollRow = {
   id: string;
@@ -17,7 +17,6 @@ type PollRow = {
 };
 
 type CreatePollPayload = {
-  requesterEmail: string;
   title: string;
   description: string;
   prompt: string;
@@ -26,18 +25,22 @@ type CreatePollPayload = {
   endsAt: string | null;
 };
 
-export const GET = async (request: Request) => {
-  // Valida o acesso admin antes de devolver todas as polls para gestão.
-  const { searchParams } = new URL(request.url);
-  const requesterEmail = searchParams.get("requesterEmail");
+const ensureAdminSession = async () => {
+  // Valida se existe sessão autenticada com perfil admin para operações sensíveis.
+  const session = await getSession();
 
-  if (!requesterEmail) {
-    return NextResponse.json({ message: "Conta admin não informada." }, { status: 400 });
+  if (!session?.isAdmin) {
+    return null;
   }
 
-  try {
-    await ensureAdminAccess(requesterEmail);
-  } catch (error) {
+  return session;
+};
+
+export const GET = async () => {
+  // Devolve todas as polls apenas para sessões administrativas autenticadas.
+  const session = await ensureAdminSession();
+
+  if (!session) {
     return NextResponse.json({ message: "Acesso restrito a administradores." }, { status: 403 });
   }
 
@@ -53,11 +56,17 @@ export const GET = async (request: Request) => {
 };
 
 export const POST = async (request: Request) => {
-  // Cria uma nova poll com estado inicial de rascunho para revisão do admin.
+  // Cria uma nova poll em rascunho associada ao admin autenticado na sessão.
+  const session = await ensureAdminSession();
+
+  if (!session) {
+    return NextResponse.json({ message: "Acesso restrito a administradores." }, { status: 403 });
+  }
+
   const payload = (await request.json()) as CreatePollPayload;
 
-  if (!payload.requesterEmail || !payload.title || !payload.description || !payload.prompt) {
-    return NextResponse.json({ message: "Preencha título, descrição, pergunta e admin." }, { status: 400 });
+  if (!payload.title || !payload.description || !payload.prompt) {
+    return NextResponse.json({ message: "Preencha título, descrição e pergunta." }, { status: 400 });
   }
 
   const normalizedOptions = payload.options
@@ -69,15 +78,6 @@ export const POST = async (request: Request) => {
       { message: "Inclua pelo menos duas opções para a poll." },
       { status: 400 }
     );
-  }
-
-  let adminId = "";
-
-  try {
-    const admin = await ensureAdminAccess(payload.requesterEmail);
-    adminId = admin.id;
-  } catch (error) {
-    return NextResponse.json({ message: "Acesso restrito a administradores." }, { status: 403 });
   }
 
   const startsAt = payload.startsAt ? new Date(payload.startsAt) : null;
@@ -101,7 +101,7 @@ export const POST = async (request: Request) => {
       JSON.stringify(normalizedOptions),
       startsAt ? startsAt.toISOString() : null,
       endsAt ? endsAt.toISOString() : null,
-      adminId,
+      session.userId,
     ]
   );
 

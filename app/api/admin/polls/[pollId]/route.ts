@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { ensureAdminAccess } from "@/lib/admin";
 import { query } from "@/lib/database";
+import { getSession } from "@/lib/session";
 
 type UpdatePollPayload = {
-  requesterEmail: string;
   title: string;
   description: string;
   prompt: string;
@@ -18,12 +17,18 @@ export const PUT = async (
   request: Request,
   { params }: { params: Promise<{ pollId: string }> }
 ) => {
-  // Atualiza conteúdo e estado da poll para abrir, fechar ou manter em rascunho.
+  // Atualiza conteúdo e estado da poll apenas para admins autenticados na sessão.
+  const session = await getSession();
+
+  if (!session?.isAdmin) {
+    return NextResponse.json({ message: "Acesso restrito a administradores." }, { status: 403 });
+  }
+
   const payload = (await request.json()) as UpdatePollPayload;
   const { pollId } = await params;
 
-  if (!payload.requesterEmail || !payload.title || !payload.description || !payload.prompt) {
-    return NextResponse.json({ message: "Preencha título, descrição, pergunta e admin." }, { status: 400 });
+  if (!payload.title || !payload.description || !payload.prompt) {
+    return NextResponse.json({ message: "Preencha título, descrição e pergunta." }, { status: 400 });
   }
 
   const normalizedOptions = payload.options
@@ -34,14 +39,12 @@ export const PUT = async (
     return NextResponse.json({ message: "Inclua pelo menos duas opções." }, { status: 400 });
   }
 
-  if (!["draft", "open", "closed"].includes(payload.status)) {
+  if (![
+    "draft",
+    "open",
+    "closed",
+  ].includes(payload.status)) {
     return NextResponse.json({ message: "Estado da poll inválido." }, { status: 400 });
-  }
-
-  try {
-    await ensureAdminAccess(payload.requesterEmail);
-  } catch (error) {
-    return NextResponse.json({ message: "Acesso restrito a administradores." }, { status: 403 });
   }
 
   const startsAt = payload.startsAt ? new Date(payload.startsAt) : null;

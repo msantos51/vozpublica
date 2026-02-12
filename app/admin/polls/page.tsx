@@ -83,7 +83,7 @@ export default function AdminPollsPage() {
 
     const loadPolls = async () => {
       const response = await fetch(
-        `/api/admin/polls?requesterEmail=${encodeURIComponent(sessionUser.email)}`
+        "/api/admin/polls"
       );
       const data = (await response.json()) as { polls?: Poll[]; message?: string };
 
@@ -131,7 +131,6 @@ export default function AdminPollsPage() {
     setFeedback(null);
 
     const payload = {
-      requesterEmail: sessionUser.email,
       title: form.title,
       description: form.description,
       prompt: form.prompt,
@@ -160,9 +159,7 @@ export default function AdminPollsPage() {
 
     setFeedback(data.message ?? "Poll guardada com sucesso.");
 
-    const refreshResponse = await fetch(
-      `/api/admin/polls?requesterEmail=${encodeURIComponent(sessionUser.email)}`
-    );
+    const refreshResponse = await fetch("/api/admin/polls");
     const refreshData = (await refreshResponse.json()) as { polls?: Poll[] };
 
     setPolls(refreshData.polls ?? []);

@@ -101,7 +101,7 @@ export default function DashboardPage() {
 
     const loadProfile = async () => {
       try {
-        const response = await fetch(`/api/user?email=${encodeURIComponent(storedSession)}`);
+        const response = await fetch("/api/user");
         const data = (await response.json()) as ProfileResponse;
 
         if (!response.ok || !data.user) {
@@ -173,7 +173,6 @@ export default function DashboardPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currentEmail: sessionEmail,
           email: profile.email,
           firstName: profile.firstName,
           lastName: profile.lastName,
@@ -275,7 +274,6 @@ export default function DashboardPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: sessionEmail,
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,
           confirmNewPassword: passwordForm.confirmNewPassword,
@@ -298,8 +296,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    // Remove os dados da sessão ativa e regressa ao login.
+  const handleLogout = async () => {
+    // Termina a sessão no servidor e remove os dados locais antes do redirecionamento.
+    await fetch("/api/auth/logout", { method: "POST" });
     localStorage.removeItem(sessionStorageKey);
     localStorage.removeItem(userStorageKey);
     router.push("/login");

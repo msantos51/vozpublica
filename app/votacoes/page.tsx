@@ -215,8 +215,7 @@ export default function VotacoesPage() {
       setIsLoadingResults(true);
 
       try {
-        const queryEmail = sessionEmail ? `?email=${encodeURIComponent(sessionEmail)}` : "";
-        const response = await fetch(`/api/polls/${activePoll.id}/vote${queryEmail}`, {
+        const response = await fetch(`/api/polls/${activePoll.id}/vote`, {
           cache: "no-store",
         });
         const data = (await response.json()) as PollVoteResponse;
@@ -308,7 +307,6 @@ export default function VotacoesPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: sessionEmail,
           option: selectedOption,
         }),
       });

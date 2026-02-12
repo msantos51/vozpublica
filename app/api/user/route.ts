@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
+import { getSession } from "@/lib/session";
 
 type UserRow = {
   id: string;
@@ -17,7 +18,6 @@ type UserRow = {
 };
 
 type UpdatePayload = {
-  currentEmail: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -37,22 +37,20 @@ const allowedEducationLevels = [
   "doctorate",
 ];
 
-export const GET = async (request: Request) => {
-  // Obtém o e-mail a partir da query string para devolver o perfil.
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get("email");
+export const GET = async () => {
+  // Devolve o perfil do utilizador autenticado com base na sessão server-side.
+  const session = await getSession();
 
-  if (!email) {
+  if (!session?.userId) {
     return NextResponse.json(
-      { message: "O e-mail é obrigatório para carregar o perfil." },
-      { status: 400 }
+      { message: "É necessário iniciar sessão para carregar o perfil." },
+      { status: 401 }
     );
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
   const result = await query<UserRow>(
-    "select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed, is_admin from users where email = $1",
-    [normalizedEmail]
+    "select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed, is_admin from users where id = $1",
+    [session.userId]
   );
 
   if (!result.rows[0]) {
@@ -77,10 +75,19 @@ export const GET = async (request: Request) => {
 };
 
 export const PUT = async (request: Request) => {
-  // Lê os dados do formulário para atualizar o perfil do utilizador.
+  // Atualiza o perfil do utilizador autenticado sem confiar em e-mail enviado pelo cliente.
+  const session = await getSession();
+
+  if (!session?.userId) {
+    return NextResponse.json(
+      { message: "É necessário iniciar sessão para atualizar o perfil." },
+      { status: 401 }
+    );
+  }
+
   const payload = (await request.json()) as UpdatePayload;
 
-  if (!payload.currentEmail || !payload.email || !payload.firstName || !payload.lastName) {
+  if (!payload.email || !payload.firstName || !payload.lastName) {
     return NextResponse.json(
       { message: "Primeiro nome, último nome e e-mail são obrigatórios." },
       { status: 400 }
@@ -105,13 +112,18 @@ export const PUT = async (request: Request) => {
     );
   }
 
-  const normalizedCurrentEmail = payload.currentEmail.trim().toLowerCase();
   const normalizedEmail = payload.email.trim().toLowerCase();
 
-  const existingUser = await query<UserRow>("select id from users where email = $1", [normalizedCurrentEmail]);
+  const conflictingUser = await query<UserRow>(
+    "select id from users where email = $1 and id <> $2",
+    [normalizedEmail, session.userId]
+  );
 
-  if (!existingUser.rows[0]) {
-    return NextResponse.json({ message: "Utilizador não encontrado." }, { status: 404 });
+  if (conflictingUser.rowCount) {
+    return NextResponse.json(
+      { message: "Já existe uma conta registada com este e-mail." },
+      { status: 409 }
+    );
   }
 
   const firstName = payload.firstName.trim();
@@ -129,7 +141,7 @@ export const PUT = async (request: Request) => {
          gender = $7,
          education_level = $8,
          profile_completed = true
-     where email = $9`,
+     where id = $9`,
     [
       firstName,
       lastName,
@@ -139,7 +151,7 @@ export const PUT = async (request: Request) => {
       payload.city.trim(),
       payload.gender,
       payload.educationLevel,
-      normalizedCurrentEmail,
+      session.userId,
     ]
   );
 

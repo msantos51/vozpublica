@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { getSession } from "@/lib/session";
 
 type PasswordChangePayload = {
-  email: string;
   currentPassword: string;
   newPassword: string;
   confirmNewPassword: string;
@@ -16,15 +16,19 @@ type UserCredentialsRow = {
 };
 
 export const PUT = async (request: Request) => {
-  // Lê os dados para validar a senha atual e guardar a nova senha.
+  // Atualiza senha do utilizador autenticado validando credencial atual no servidor.
+  const session = await getSession();
+
+  if (!session?.userId) {
+    return NextResponse.json(
+      { message: "É necessário iniciar sessão para alterar a senha." },
+      { status: 401 }
+    );
+  }
+
   const payload = (await request.json()) as PasswordChangePayload;
 
-  if (
-    !payload.email ||
-    !payload.currentPassword ||
-    !payload.newPassword ||
-    !payload.confirmNewPassword
-  ) {
+  if (!payload.currentPassword || !payload.newPassword || !payload.confirmNewPassword) {
     return NextResponse.json(
       { message: "Preencha a senha atual, nova senha e confirmação." },
       { status: 400 }
@@ -38,10 +42,9 @@ export const PUT = async (request: Request) => {
     );
   }
 
-  const normalizedEmail = payload.email.trim().toLowerCase();
   const userResult = await query<UserCredentialsRow>(
-    "select id, password_hash from users where email = $1",
-    [normalizedEmail]
+    "select id, password_hash from users where id = $1",
+    [session.userId]
   );
 
   const user = userResult.rows[0];

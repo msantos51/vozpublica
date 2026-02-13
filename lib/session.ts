@@ -13,7 +13,9 @@ type SessionPayload = {
   exp: number;
 };
 
-const getSessionSecret = (options?: { allowMissing?: boolean }) => {
+function getSessionSecret(options: { allowMissing: true }): string | null;
+function getSessionSecret(options?: { allowMissing?: false }): string;
+function getSessionSecret(options?: { allowMissing?: boolean }) {
   // Obtém a chave de assinatura da sessão e usa fallback apenas em ambiente de desenvolvimento.
   const secret = process.env.SESSION_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
 
@@ -36,7 +38,7 @@ const getSessionSecret = (options?: { allowMissing?: boolean }) => {
   }
 
   return secret;
-};
+}
 
 const toBase64Url = (value: string) => {
   // Converte texto para base64url para permitir transporte seguro no cookie.

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type PollStatus = "draft" | "open" | "closed";
@@ -31,6 +32,7 @@ type PollForm = {
 };
 
 const userStorageKey = "vp_user";
+const sessionStorageKey = "vp_session";
 
 const emptyForm: PollForm = {
   title: "",
@@ -43,6 +45,7 @@ const emptyForm: PollForm = {
 };
 
 export default function AdminPollsPage() {
+  const router = useRouter();
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [form, setForm] = useState<PollForm>(emptyForm);
@@ -182,6 +185,15 @@ export default function AdminPollsPage() {
     }
   };
 
+
+  const handleAdminLogout = async () => {
+    // Termina a sessão administrativa e limpa os dados locais para evitar acesso indevido.
+    await fetch("/api/auth/logout", { method: "POST" });
+    localStorage.removeItem(sessionStorageKey);
+    localStorage.removeItem(userStorageKey);
+    router.push("/login");
+  };
+
   if (isLoading) {
     return <p className="text-sm text-slate-500">A carregar painel admin...</p>;
   }
@@ -209,10 +221,21 @@ export default function AdminPollsPage() {
   return (
     <section className="space-y-6">
       <header className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
-        <h1 className="page-title">Administração de Polls</h1>
-        <p className="mt-3 text-sm text-slate-600">
-          Crie polls, defina prazos e altere estados para abrir ou fechar votações.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="page-title">Administração de Polls</h1>
+            <p className="mt-3 text-sm text-slate-600">
+              Crie polls, defina prazos e altere estados para abrir ou fechar votações.
+            </p>
+          </div>
+          <button
+            className="button-size-login border border-slate-200 bg-white"
+            type="button"
+            onClick={handleAdminLogout}
+          >
+            Terminar sessão (admin)
+          </button>
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">

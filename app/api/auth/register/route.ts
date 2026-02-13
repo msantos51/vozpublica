@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { query } from "@/lib/database";
-import { hashNationalId, isValidNationalIdFormat, normalizeNationalId } from "@/lib/identity";
 import { hashPassword } from "@/lib/password";
 
 type RegisterPayload = {
   firstName: string;
   lastName: string;
   email: string;
-  nationalId: string;
   password: string;
   confirmPassword: string;
 };
@@ -27,9 +25,9 @@ export const POST = async (request: Request) => {
   // Lê o corpo da requisição para criar o novo utilizador.
   const payload = (await request.json()) as RegisterPayload;
 
-  if (!payload.firstName || !payload.lastName || !payload.email || !payload.nationalId || !payload.password || !payload.confirmPassword) {
+  if (!payload.firstName || !payload.lastName || !payload.email || !payload.password || !payload.confirmPassword) {
     return NextResponse.json(
-      { message: "Preencha primeiro nome, último nome, e-mail, NIF, senha e confirmação para continuar." },
+      { message: "Preencha primeiro nome, último nome, e-mail, senha e confirmação para continuar." },
       { status: 400 }
     );
   }
@@ -37,15 +35,6 @@ export const POST = async (request: Request) => {
   if (payload.password !== payload.confirmPassword) {
     return NextResponse.json(
       { message: "A confirmação da senha deve ser igual à senha informada." },
-      { status: 400 }
-    );
-  }
-
-  const normalizedNationalId = normalizeNationalId(payload.nationalId);
-
-  if (!isValidNationalIdFormat(normalizedNationalId)) {
-    return NextResponse.json(
-      { message: "O NIF deve conter exatamente 9 dígitos." },
       { status: 400 }
     );
   }
@@ -61,16 +50,6 @@ export const POST = async (request: Request) => {
     );
   }
 
-  const nationalIdHash = hashNationalId(normalizedNationalId);
-  const existingUserByNationalId = await query<UserRow>("select id from users where national_id_hash = $1", [nationalIdHash]);
-
-  if (existingUserByNationalId.rowCount && existingUserByNationalId.rowCount > 0) {
-    return NextResponse.json(
-      { message: "Já existe uma conta associada a este NIF." },
-      { status: 409 }
-    );
-  }
-
   const firstName = payload.firstName.trim();
   const lastName = payload.lastName.trim();
   const fullName = `${firstName} ${lastName}`.trim();
@@ -79,10 +58,10 @@ export const POST = async (request: Request) => {
   const shouldBeAdmin = Boolean(firstAdminEmail) && normalizedEmail === firstAdminEmail;
 
   const result = await query<UserRow>(
-    `insert into users (first_name, last_name, full_name, email, national_id_hash, password_hash, profile_completed, is_admin)
-     values ($1, $2, $3, $4, $5, $6, false, $7)
+    `insert into users (first_name, last_name, full_name, email, password_hash, profile_completed, is_admin)
+     values ($1, $2, $3, $4, $5, false, $6)
      returning id, first_name, last_name, full_name, email, is_admin, created_at`,
-    [firstName, lastName, fullName, normalizedEmail, nationalIdHash, passwordHash, shouldBeAdmin]
+    [firstName, lastName, fullName, normalizedEmail, passwordHash, shouldBeAdmin]
   );
 
   return NextResponse.json({

@@ -12,6 +12,8 @@ type UserProfile = {
   city: string;
   gender: string;
   educationLevel: string;
+  nationalId: string;
+  hasNationalId: boolean;
   profileCompleted: boolean;
   isAdmin: boolean;
 };
@@ -37,6 +39,7 @@ type ProfileResponse = {
     city: string | null;
     gender: string | null;
     educationLevel: string | null;
+    hasNationalId: boolean;
     profileCompleted: boolean;
     isAdmin: boolean;
   };
@@ -85,7 +88,7 @@ export default function DashboardPage() {
       return false;
     }
 
-    return !profile.profileCompleted;
+    return !profile.profileCompleted || !profile.hasNationalId;
   }, [profile]);
 
   useEffect(() => {
@@ -118,6 +121,8 @@ export default function DashboardPage() {
           city: data.user.city ?? "",
           gender: data.user.gender ?? "",
           educationLevel: data.user.educationLevel ?? "",
+          nationalId: "",
+          hasNationalId: data.user.hasNationalId,
           profileCompleted: data.user.profileCompleted,
           isAdmin: data.user.isAdmin,
         };
@@ -180,6 +185,7 @@ export default function DashboardPage() {
           city: profile.city,
           gender: profile.gender,
           educationLevel: profile.educationLevel,
+          nationalId: profile.nationalId,
         }),
       });
 
@@ -196,6 +202,7 @@ export default function DashboardPage() {
         ...profile,
         fullName: `${profile.firstName} ${profile.lastName}`.trim(),
         profileCompleted: true,
+        hasNationalId: true,
         isAdmin: profile.isAdmin,
       };
 
@@ -223,9 +230,9 @@ export default function DashboardPage() {
 
     setFirstAccessFeedback(null);
 
-    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel) {
+    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel || !profile.nationalId) {
       setFirstAccessFeedback(
-        "Preencha data de nascimento, cidade, género e habilitações literárias para concluir o primeiro acesso."
+        "Preencha NIF, data de nascimento, cidade, género e habilitações literárias para concluir o primeiro acesso."
       );
       return;
     }
@@ -240,9 +247,9 @@ export default function DashboardPage() {
 
     setProfileFeedback(null);
 
-    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel) {
+    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel || !profile.nationalId) {
       setProfileFeedback(
-        "Data de nascimento, cidade, género e habilitações literárias são obrigatórios."
+        "NIF, data de nascimento, cidade, género e habilitações literárias são obrigatórios."
       );
       return;
     }
@@ -318,11 +325,23 @@ export default function DashboardPage() {
               Os dados seguintes nunca serão partilhados e servem apenas para fins estatísticos. Este preenchimento é obrigatório para concluir o primeiro acesso.
             </p>
             <p className="mt-3 text-sm font-semibold text-[color:var(--primary)]">
-              Preencha: data de nascimento, cidade, género e habilitações literárias.
+              Preencha: NIF, data de nascimento, cidade, género e habilitações literárias.
             </p>
 
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+                NIF
+                <input
+                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="Digite o seu NIF (9 dígitos)"
+                  value={profile.nationalId}
+                  onChange={(event) => handleProfileChange("nationalId", event.target.value)}
+                />
+              </label>
+
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Data de nascimento
                 <input
@@ -428,6 +447,18 @@ export default function DashboardPage() {
                 className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
                 value={profile.email}
                 onChange={(event) => handleProfileChange("email", event.target.value)}
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              NIF
+              <input
+                className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
+                inputMode="numeric"
+                maxLength={9}
+                placeholder="Digite o seu NIF (9 dígitos)"
+                value={profile.nationalId}
+                onChange={(event) => handleProfileChange("nationalId", event.target.value)}
               />
             </label>
 

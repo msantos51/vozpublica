@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 const sessionCookieName = "vp_session_token";
 const sessionDurationMs = 1000 * 60 * 60 * 24 * 7;
+let missingSecretWarningDisplayed = false;
 
 type SessionPayload = {
   userId: string;
@@ -12,13 +13,23 @@ type SessionPayload = {
   exp: number;
 };
 
-const getSessionSecret = () => {
+const getSessionSecret = (options?: { allowMissing?: boolean }) => {
   // Obtém a chave de assinatura da sessão e usa fallback apenas em ambiente de desenvolvimento.
   const secret = process.env.SESSION_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
 
   if (!secret) {
     if (process.env.NODE_ENV !== "production") {
       return "development-only-session-secret";
+    }
+
+    if (options?.allowMissing) {
+      if (!missingSecretWarningDisplayed) {
+        // Registra aviso único para facilitar diagnóstico sem derrubar a aplicação em runtime.
+        console.error("SESSION_SECRET_NOT_CONFIGURED");
+        missingSecretWarningDisplayed = true;
+      }
+
+      return null;
     }
 
     throw new Error("SESSION_SECRET_NOT_CONFIGURED");
@@ -69,7 +80,12 @@ const createSessionToken = (payload: Omit<SessionPayload, "exp">) => {
 
 const parseSessionToken = (token: string): SessionPayload | null => {
   // Valida assinatura, integridade e expiração do token antes de aceitar a sessão.
-  const secret = getSessionSecret();
+  const secret = getSessionSecret({ allowMissing: true });
+
+  if (!secret) {
+    return null;
+  }
+
   const [encodedPayload, providedSignature] = token.split(".");
 
   if (!encodedPayload || !providedSignature) {

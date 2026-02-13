@@ -1,10 +1,11 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 import { cookies } from "next/headers";
 
 const sessionCookieName = "vp_session_token";
 const sessionDurationMs = 1000 * 60 * 60 * 24 * 7;
 let missingSecretWarningDisplayed = false;
+let derivedSecretWarningDisplayed = false;
 
 type SessionPayload = {
   userId: string;
@@ -13,31 +14,54 @@ type SessionPayload = {
   exp: number;
 };
 
+const deriveFallbackSecret = () => {
+  // Deriva uma chave estável para o ambiente atual quando a variável dedicada não foi definida.
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+
+  if (!databaseUrl) {
+    return null;
+  }
+
+  return createHash("sha256").update(databaseUrl).digest("hex");
+};
+
 function getSessionSecret(options: { allowMissing: true }): string | null;
 function getSessionSecret(options?: { allowMissing?: false }): string;
 function getSessionSecret(options?: { allowMissing?: boolean }) {
-  // Obtém a chave de assinatura da sessão e usa fallback apenas em ambiente de desenvolvimento.
-  const secret = process.env.SESSION_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
+  // Obtém a chave principal de assinatura da sessão com suporte a fallback controlado.
+  const configuredSecret = process.env.SESSION_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
 
-  if (!secret) {
-    if (process.env.NODE_ENV !== "production") {
-      return "development-only-session-secret";
-    }
-
-    if (options?.allowMissing) {
-      if (!missingSecretWarningDisplayed) {
-        // Registra aviso único para facilitar diagnóstico sem derrubar a aplicação em runtime.
-        console.error("SESSION_SECRET_NOT_CONFIGURED");
-        missingSecretWarningDisplayed = true;
-      }
-
-      return null;
-    }
-
-    throw new Error("SESSION_SECRET_NOT_CONFIGURED");
+  if (configuredSecret) {
+    return configuredSecret;
   }
 
-  return secret;
+  if (process.env.NODE_ENV !== "production") {
+    return "development-only-session-secret";
+  }
+
+  const derivedSecret = deriveFallbackSecret();
+
+  if (derivedSecret) {
+    if (!derivedSecretWarningDisplayed) {
+      // Regista aviso único para incentivar configuração explícita da secret em produção.
+      console.error("SESSION_SECRET_NOT_CONFIGURED_USING_DATABASE_URL_FALLBACK");
+      derivedSecretWarningDisplayed = true;
+    }
+
+    return derivedSecret;
+  }
+
+  if (!missingSecretWarningDisplayed) {
+    // Regista aviso único quando não há qualquer fonte para assinar ou validar sessões.
+    console.error("SESSION_SECRET_NOT_CONFIGURED");
+    missingSecretWarningDisplayed = true;
+  }
+
+  if (options?.allowMissing) {
+    return null;
+  }
+
+  throw new Error("SESSION_SECRET_NOT_CONFIGURED");
 }
 
 const toBase64Url = (value: string) => {

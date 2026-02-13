@@ -52,11 +52,19 @@ export const POST = async (request: Request) => {
     );
   }
 
-  await createSession({
-    userId: user.id,
-    email: user.email,
-    isAdmin: user.is_admin,
-  });
+  try {
+    // Cria a sessão autenticada e evita quebra total caso haja erro de configuração.
+    await createSession({
+      userId: user.id,
+      email: user.email,
+      isAdmin: user.is_admin,
+    });
+  } catch {
+    return NextResponse.json(
+      { message: "Não foi possível iniciar a sessão no servidor. Contacte o suporte." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     message: "Login efetuado com sucesso.",

@@ -15,6 +15,15 @@ const sessionStorageKey = "vp_session";
 export default function HeaderActions() {
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
+  const profileHref = useMemo(() => {
+    // Encaminha administradores diretamente para a área de gestão.
+    if (sessionUser?.isAdmin) {
+      return "/admin/polls";
+    }
+
+    return "/dashboard";
+  }, [sessionUser]);
+
   const profileInitials = useMemo(() => {
     if (!sessionUser?.fullName) {
       return "VP";
@@ -67,7 +76,7 @@ export default function HeaderActions() {
       {sessionUser && (
         <Link
           className="flex max-w-full items-center gap-3 rounded-full bg-[color:var(--surface)] px-4 py-2 shadow-sm"
-          href="/dashboard"
+          href={profileHref}
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-[color:var(--primary)] text-[10px] font-semibold text-[color:var(--primary)]">
             {profileInitials}

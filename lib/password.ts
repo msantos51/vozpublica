@@ -18,6 +18,17 @@ export const verifyPassword = (password: string, storedHash: string) => {
     return false;
   }
 
-  const derivedKey = scryptSync(password, salt, keyLength).toString("hex");
-  return timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derivedKey, "hex"));
+  // Ignora hashes inválidos para evitar erro em contas antigas/malformadas.
+  if (key.length !== keyLength * 2 || !/^[0-9a-f]+$/i.test(key)) {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(key, "hex");
+  const derivedBuffer = Buffer.from(scryptSync(password, salt, keyLength));
+
+  if (expectedBuffer.length !== derivedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, derivedBuffer);
 };

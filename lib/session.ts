@@ -13,10 +13,14 @@ type SessionPayload = {
 };
 
 const getSessionSecret = () => {
-  // Obtém a chave de assinatura da sessão e bloqueia execução sem configuração segura.
-  const secret = process.env.SESSION_SECRET?.trim();
+  // Obtém a chave de assinatura da sessão e usa fallback apenas em ambiente de desenvolvimento.
+  const secret = process.env.SESSION_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
 
   if (!secret) {
+    if (process.env.NODE_ENV !== "production") {
+      return "development-only-session-secret";
+    }
+
     throw new Error("SESSION_SECRET_NOT_CONFIGURED");
   }
 

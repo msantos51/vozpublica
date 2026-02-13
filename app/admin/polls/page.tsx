@@ -57,19 +57,30 @@ export default function AdminPollsPage() {
   );
 
   useEffect(() => {
-    // Carrega o utilizador da sessão para validar acesso ao painel de administração.
-    const storedUser = localStorage.getItem(userStorageKey);
-
-    if (!storedUser) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Carrega o utilizador da sessão para validar acesso ao painel de administração.
+      const storedUser = localStorage.getItem(userStorageKey);
+
+      if (!storedUser) {
+        setSessionUser(null);
+        return;
+      }
+
       const parsedUser = JSON.parse(storedUser) as SessionUser;
+      const hasValidAdminShape =
+        typeof parsedUser.email === "string" && typeof parsedUser.isAdmin === "boolean";
+
+      if (!hasValidAdminShape) {
+        setSessionUser(null);
+        setFeedback("Sessão inválida. Faça login novamente.");
+        return;
+      }
+
       setSessionUser(parsedUser);
     } catch (error) {
+      // Evita bloquear o ecrã em modo de carregamento quando o navegador bloqueia o localStorage.
       setSessionUser(null);
+      setFeedback("Não foi possível validar a sessão neste navegador.");
     } finally {
       setIsLoading(false);
     }

@@ -8,7 +8,6 @@ type RegisterForm = {
   firstName: string;
   lastName: string;
   email: string;
-  nationalId: string;
   password: string;
   confirmPassword: string;
 };
@@ -24,7 +23,6 @@ export default function AccountPage() {
     firstName: "",
     lastName: "",
     email: "",
-    nationalId: "",
     password: "",
     confirmPassword: "",
   });
@@ -133,20 +131,6 @@ export default function AccountPage() {
                   type="email"
                   value={formData.email}
                   onChange={(event) => handleChange("email", event.target.value)}
-                />
-              </label>
-
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
-                NIF
-                <input
-                  className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
-                  name="nationalId"
-                  placeholder="Digite o seu NIF (9 dígitos)"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={9}
-                  value={formData.nationalId}
-                  onChange={(event) => handleChange("nationalId", event.target.value)}
                 />
               </label>
 

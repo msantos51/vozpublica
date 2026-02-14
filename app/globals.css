@@ -40,12 +40,26 @@ input[type="reset"] {
   transition: box-shadow 0.2s ease-in-out;
 }
 
-/* Aplica sombra apenas no hover para destacar o botão sob o cursor. */
+/* Remove sombra no hover por padrão para evitar efeito em botões com fundo roxo. */
 button:hover,
 [role="button"]:hover,
 input[type="button"]:hover,
 input[type="submit"]:hover,
 input[type="reset"]:hover {
+  box-shadow: none;
+}
+
+/* Aplica sombra no hover apenas quando o botão usa fundo branco (inclui surface). */
+button.bg-white:hover,
+button.bg-\[color\:var\(--surface\)\]:hover,
+[role="button"].bg-white:hover,
+[role="button"].bg-\[color\:var\(--surface\)\]:hover,
+input[type="button"].bg-white:hover,
+input[type="button"].bg-\[color\:var\(--surface\)\]:hover,
+input[type="submit"].bg-white:hover,
+input[type="submit"].bg-\[color\:var\(--surface\)\]:hover,
+input[type="reset"].bg-white:hover,
+input[type="reset"].bg-\[color\:var\(--surface\)\]:hover {
   box-shadow: 0 10px 24px #fea076;
 }
 

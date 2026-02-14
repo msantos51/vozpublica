@@ -1,4 +1,7 @@
 import { Buffer } from "node:buffer";
+
+import { lookup } from "node:dns";
+
 import { Socket, connect as connectTcp } from "node:net";
 import { TLSSocket, connect as connectTls } from "node:tls";
 
@@ -47,6 +50,19 @@ const getSmtpConfig = (): SmtpConfig => {
 
   return { host, port, username, password, from, secure, connectionTimeoutMs: timeoutFromEnv };
 };
+
+const resolveIpv4Address = async (host: string) =>
+  new Promise<string>((resolve, reject) => {
+    // Resolve explicitamente IPv4 para reduzir falhas em ambientes com rota IPv6 instável.
+    lookup(host, { family: 4, all: false }, (error, address) => {
+      if (error || !address) {
+        reject(error ?? new Error(`Não foi possível resolver IPv4 para ${host}.`));
+        return;
+      }
+
+      resolve(address);
+    });
+  });
 
 const encodeHeader = (value: string) => {
   // Codifica cabeçalhos em UTF-8 para preservar acentos em assuntos e remetente.
@@ -172,10 +188,13 @@ const sendCommand = async (socket: Socket, command: string) => {
 export const sendEmail = async (payload: MailPayload) => {
   // Envia e-mail transacional via SMTP, suportando TLS direto (465) e STARTTLS (587).
   const config = getSmtpConfig();
+
+  const smtpIpv4 = await resolveIpv4Address(config.host);
   let socket: Socket | TLSSocket;
 
   if (config.secure) {
-    socket = connectTls({ host: config.host, port: config.port, servername: config.host, family: 4 });
+    socket = connectTls({ host: smtpIpv4, port: config.port, servername: config.host });
+
     await new Promise<void>((resolve, reject) => {
       // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
       const onError = (error: Error) => {
@@ -207,7 +226,9 @@ export const sendEmail = async (payload: MailPayload) => {
       socket.setTimeout(config.connectionTimeoutMs);
     });
   } else {
-    socket = connectTcp({ host: config.host, port: config.port, family: 4 });
+
+    socket = connectTcp({ host: smtpIpv4, port: config.port });
+
     await waitForConnect(socket, config.connectionTimeoutMs);
   }
 

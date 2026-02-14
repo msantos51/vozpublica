@@ -29,7 +29,9 @@ type PasswordForm = {
   confirmNewPassword: string;
 };
 
+
 type StoredUserProfile = Pick<UserProfile, "email" | "nationalId" | "birthDate">;
+
 
 type ProfileResponse = {
   user?: {
@@ -77,6 +79,7 @@ const getStoredNationalId = (email: string) => {
   return "";
 };
 
+
 const normalizeBirthDateForInput = (birthDate: string | null, email: string) => {
   // Garante formato YYYY-MM-DD no input date e usa fallback local quando necessário.
   if (birthDate) {
@@ -101,6 +104,7 @@ const normalizeBirthDateForInput = (birthDate: string | null, email: string) => 
 
   return "";
 };
+
 
 const educationOptions = [
   { value: "6th_grade", label: "6º Ano" },

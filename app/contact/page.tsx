@@ -1,4 +1,87 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+
+type FormData = {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+};
+
+type ContactApiResponse = {
+  message?: string;
+};
+
+const initialFormData: FormData = {
+  name: "",
+  email: "",
+  subject: "",
+  message: "",
+};
+
+const contactRecipient = "vozpublica.contacto@gmail.com";
+
 export default function ContactPage() {
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFallbackEmailLink, setShowFallbackEmailLink] = useState(false);
+
+  const fallbackMailToLink = useMemo(() => {
+    // Gera link de contingência para abrir o cliente de e-mail sem perder os dados do formulário.
+    const fallbackSubject = encodeURIComponent(`[Contacto] ${formData.subject || "Sem assunto"}`);
+    const fallbackBody = encodeURIComponent(
+      `Nome: ${formData.name}\nE-mail: ${formData.email}\n\nMensagem:\n${formData.message}`,
+    );
+
+    return `mailto:${contactRecipient}?subject=${fallbackSubject}&body=${fallbackBody}`;
+  }, [formData]);
+
+  const handleFieldChange = (field: keyof FormData, value: string) => {
+    // Atualiza apenas o campo alterado, mantendo o restante estado intacto.
+    setFormData((previousData) => ({
+      ...previousData,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatusMessage("");
+    setIsSuccess(false);
+    setShowFallbackEmailLink(false);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = (await response.json()) as ContactApiResponse;
+
+      if (!response.ok) {
+        setStatusMessage(data.message || "Não foi possível enviar a mensagem.");
+        setShowFallbackEmailLink(response.status === 503);
+        return;
+      }
+
+      setStatusMessage(data.message || "Mensagem enviada com sucesso.");
+      setIsSuccess(true);
+      setFormData(initialFormData);
+    } catch {
+      setStatusMessage("Erro de ligação. Tente novamente dentro de alguns instantes.");
+      setShowFallbackEmailLink(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section className="space-y-8">
       {/* Contém apenas o formulário de contacto com o conteúdo centralizado. */}
@@ -6,26 +89,26 @@ export default function ContactPage() {
         {/* Cartão com formulário para envio de mensagens. */}
         <article className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
-            {/* Título e instruções do formulário de contato. */}
+            {/* Título e instruções do formulário de contacto. */}
             <div>
               <p className="section-label">Formulário de contacto</p>
-              <h1 className="mt-2 page-title">
-                Envie a sua mensagem para a equipa.
-              </h1>
+              <h1 className="mt-2 page-title">Envie a sua mensagem para a equipa.</h1>
               <p className="mt-2 text-sm text-justify text-slate-500">
-                Partilhe dúvidas, sugestões ou solicitações e responderemos em
-                breve.
+                Partilhe dúvidas, sugestões ou solicitações e responderemos em breve.
               </p>
             </div>
-            {/* Formulário com campos essenciais para contato. */}
-            <form className="grid gap-4 md:grid-cols-2">
+            {/* Formulário com campos essenciais para contacto. */}
+            <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Nome
                 <input
                   className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="name"
+                  onChange={(event) => handleFieldChange("name", event.target.value)}
                   placeholder="Digite o seu nome"
+                  required
                   type="text"
+                  value={formData.name}
                 />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -33,8 +116,11 @@ export default function ContactPage() {
                 <input
                   className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="email"
+                  onChange={(event) => handleFieldChange("email", event.target.value)}
                   placeholder="voce@email.com"
+                  required
                   type="email"
+                  value={formData.email}
                 />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
@@ -42,8 +128,11 @@ export default function ContactPage() {
                 <input
                   className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="subject"
+                  onChange={(event) => handleFieldChange("subject", event.target.value)}
                   placeholder="Ex.: parceria, suporte, imprensa"
+                  required
                   type="text"
+                  value={formData.subject}
                 />
               </label>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 md:col-span-2">
@@ -51,21 +140,40 @@ export default function ContactPage() {
                 <textarea
                   className="soft-gradient-input min-h-[140px] rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[color:var(--primary)]"
                   name="message"
+                  onChange={(event) => handleFieldChange("message", event.target.value)}
                   placeholder="Escreva a sua mensagem"
+                  required
+                  value={formData.message}
                 />
               </label>
-              {/* Ações do formulário de contato. */}
+              {/* Ações do formulário de contacto. */}
               <div className="flex flex-wrap items-center gap-3 md:col-span-2">
                 <button
-                  className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95"
+                  className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={isSubmitting}
                   type="submit"
                 >
-                  Enviar mensagem
+                  {isSubmitting ? "A enviar..." : "Enviar mensagem"}
                 </button>
-                <p className="text-xs text-justify text-slate-500">
-                  Responderemos em até 2 dias úteis.
-                </p>
+                <p className="text-xs text-justify text-slate-500">Responderemos em até 2 dias úteis.</p>
               </div>
+              {statusMessage ? (
+                <p
+                  className={`text-sm md:col-span-2 ${
+                    isSuccess ? "text-emerald-700" : "text-rose-700"
+                  }`}
+                >
+                  {statusMessage}
+                </p>
+              ) : null}
+              {showFallbackEmailLink ? (
+                <p className="text-sm md:col-span-2 text-slate-700">
+                  Se preferir, pode enviar agora por e-mail: {" "}
+                  <a className="font-semibold text-[color:var(--primary)] underline" href={fallbackMailToLink}>
+                    {contactRecipient}
+                  </a>
+                </p>
+              ) : null}
             </form>
           </div>
         </article>

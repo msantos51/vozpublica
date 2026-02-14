@@ -22,6 +22,7 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+
 const normalizeContactMessage = (value: string) =>
   value
     .split("\n")
@@ -31,6 +32,7 @@ const normalizeContactMessage = (value: string) =>
 
 const isResendSandboxError = (errorMessage: string) =>
   errorMessage.toLowerCase().includes("you can only send testing emails");
+
 
 export async function POST(request: Request) {
   let payload: ContactPayload;
@@ -47,7 +49,9 @@ export async function POST(request: Request) {
   const name = sanitizeText(payload.name || "");
   const email = sanitizeText(payload.email || "").toLowerCase();
   const subject = sanitizeText(payload.subject || "");
+
   const message = normalizeContactMessage(payload.message || "");
+
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json(
@@ -67,8 +71,10 @@ export async function POST(request: Request) {
     await sendEmail({
       to: contactRecipient,
       subject: `[Contacto] ${subject}`,
+
       replyTo: email,
       text: `Novo contacto recebido\n\nNome: ${name}\nE-mail: ${email}\nAssunto: ${subject}\n\nMensagem:\n${message}`,
+
       html: `
         <h2>Novo contacto recebido</h2>
         <p><strong>Nome:</strong> ${escapeHtml(name)}</p>
@@ -100,5 +106,6 @@ export async function POST(request: Request) {
       { message: "Não foi possível enviar a mensagem agora. Tente novamente em alguns minutos." },
       { status: 500 },
     );
+
   }
 }

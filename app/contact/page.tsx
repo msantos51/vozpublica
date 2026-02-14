@@ -1,6 +1,8 @@
 "use client";
 
+
 import { FormEvent, useMemo, useState } from "react";
+
 
 type FormData = {
   name: string;
@@ -9,9 +11,11 @@ type FormData = {
   message: string;
 };
 
+
 type ContactApiResponse = {
   message?: string;
 };
+
 
 const initialFormData: FormData = {
   name: "",
@@ -20,13 +24,16 @@ const initialFormData: FormData = {
   message: "",
 };
 
+
 const contactRecipient = "vozpublica.contacto@gmail.com";
+
 
 export default function ContactPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [statusMessage, setStatusMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [showFallbackEmailLink, setShowFallbackEmailLink] = useState(false);
 
   const fallbackMailToLink = useMemo(() => {
@@ -38,6 +45,7 @@ export default function ContactPage() {
 
     return `mailto:${contactRecipient}?subject=${fallbackSubject}&body=${fallbackBody}`;
   }, [formData]);
+
 
   const handleFieldChange = (field: keyof FormData, value: string) => {
     // Atualiza apenas o campo alterado, mantendo o restante estado intacto.
@@ -51,7 +59,9 @@ export default function ContactPage() {
     event.preventDefault();
     setStatusMessage("");
     setIsSuccess(false);
+
     setShowFallbackEmailLink(false);
+
     setIsSubmitting(true);
 
     try {
@@ -63,11 +73,13 @@ export default function ContactPage() {
         body: JSON.stringify(formData),
       });
 
+
       const data = (await response.json()) as ContactApiResponse;
 
       if (!response.ok) {
         setStatusMessage(data.message || "Não foi possível enviar a mensagem.");
         setShowFallbackEmailLink(response.status === 503);
+
         return;
       }
 
@@ -76,7 +88,9 @@ export default function ContactPage() {
       setFormData(initialFormData);
     } catch {
       setStatusMessage("Erro de ligação. Tente novamente dentro de alguns instantes.");
+
       setShowFallbackEmailLink(true);
+
     } finally {
       setIsSubmitting(false);
     }
@@ -97,7 +111,9 @@ export default function ContactPage() {
                 Partilhe dúvidas, sugestões ou solicitações e responderemos em breve.
               </p>
             </div>
+
             {/* Formulário com campos essenciais para contacto. */}
+
             <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Nome
@@ -166,6 +182,7 @@ export default function ContactPage() {
                   {statusMessage}
                 </p>
               ) : null}
+
               {showFallbackEmailLink ? (
                 <p className="text-sm md:col-span-2 text-slate-700">
                   Se preferir, pode enviar agora por e-mail: {" "}
@@ -174,6 +191,7 @@ export default function ContactPage() {
                   </a>
                 </p>
               ) : null}
+
             </form>
           </div>
         </article>

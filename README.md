@@ -68,3 +68,26 @@ No painel é possível:
 - criar polls;
 - definir datas de abertura e fecho;
 - alterar estado (`draft`, `open`, `closed`).
+
+## Configuração de SMTP (recuperação de password e confirmação de e-mail)
+
+Defina estas variáveis no ambiente de execução:
+
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=vozpublica.contacto@gmail.com
+SMTP_PASS=<gmail-app-password>
+SMTP_FROM=vozpublica.contacto@gmail.com
+SMTP_CONNECTION_TIMEOUT_MS=10000
+
+# Opcional: portas de fallback separadas por vírgula.
+# Exemplo: se a 587 estiver bloqueada, tenta 465 automaticamente (ou vice-versa).
+SMTP_FALLBACK_PORTS=587
+```
+
+Notas importantes para Gmail:
+- `SMTP_PASS` deve ser uma **App Password** (não a password normal da conta).
+- Se usar `SMTP_PORT=587`, recomenda-se `SMTP_SECURE=false` (STARTTLS).
+- Se usar `SMTP_PORT=465`, recomenda-se `SMTP_SECURE=true` (TLS direto).

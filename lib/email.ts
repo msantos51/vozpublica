@@ -12,6 +12,7 @@ type MailPayload = {
 type SmtpConfig = {
   host: string;
   port: number;
+  fallbackPorts: number[];
   username: string;
   password: string;
   from: string;
@@ -21,10 +22,48 @@ type SmtpConfig = {
 
 const defaultSender = "vozpublica.contacto@gmail.com";
 
+const parseFallbackPorts = (rawFallbackPorts: string | undefined, primaryPort: number) => {
+  // Interpreta lista opcional de portas de fallback para tentar outro canal SMTP quando o principal falha.
+  if (!rawFallbackPorts?.trim()) {
+    if (primaryPort === 587) {
+      return [465];
+    }
+
+    if (primaryPort === 465) {
+      return [587];
+    }
+
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      rawFallbackPorts
+        .split(",")
+        .map((value) => Number(value.trim()))
+        .filter((value) => Number.isInteger(value) && value > 0 && value <= 65535 && value !== primaryPort)
+    )
+  );
+};
+
+const resolveSecureMode = (secureFromEnv: string | undefined, port: number) => {
+  // Deriva se a ligação deve iniciar em TLS direto ou STARTTLS com base no porto e variável explícita.
+  if (secureFromEnv === "true") {
+    return true;
+  }
+
+  if (secureFromEnv === "false") {
+    return false;
+  }
+
+  return port === 465;
+};
+
 const getSmtpConfig = (): SmtpConfig => {
   // Lê configuração SMTP e aplica defaults para envio via conta principal do projeto.
   const host = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT?.trim() || "465");
+  const fallbackPorts = parseFallbackPorts(process.env.SMTP_FALLBACK_PORTS, port);
   const username = process.env.SMTP_USER?.trim() || defaultSender;
   const password = process.env.SMTP_PASS?.trim() || "";
   const from = process.env.SMTP_FROM?.trim() || defaultSender;
@@ -43,10 +82,18 @@ const getSmtpConfig = (): SmtpConfig => {
     throw new Error("SMTP_CONNECTION_TIMEOUT_MS inválida.");
   }
 
-  const secure =
-    secureFromEnv === "true" ? true : secureFromEnv === "false" ? false : port === 465;
+  const secure = resolveSecureMode(secureFromEnv, port);
 
-  return { host, port, username, password, from, secure, connectionTimeoutMs: timeoutFromEnv };
+  return {
+    host,
+    port,
+    fallbackPorts,
+    username,
+    password,
+    from,
+    secure,
+    connectionTimeoutMs: timeoutFromEnv,
+  };
 };
 
 const resolveIpv4Addresses = async (host: string) =>
@@ -207,11 +254,14 @@ export const sendEmail = async (payload: MailPayload) => {
   }
 
   const connectionTargets = [...ipv4Addresses, config.host];
+  const connectionPorts = [config.port, ...config.fallbackPorts];
 
-  const connectToTarget = async (targetHost: string) => {
+  const connectToTarget = async (targetHost: string, targetPort: number) => {
     // Tenta conexão por destino individual para permitir múltiplas tentativas com timeout controlado.
-    if (config.secure) {
-      const tlsSocket = connectTls({ host: targetHost, port: config.port, servername: config.host });
+    const shouldUseTlsFromStart = resolveSecureMode(process.env.SMTP_SECURE?.trim().toLowerCase(), targetPort);
+
+    if (shouldUseTlsFromStart) {
+      const tlsSocket = connectTls({ host: targetHost, port: targetPort, servername: config.host });
 
       await new Promise<void>((resolve, reject) => {
         // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
@@ -247,21 +297,29 @@ export const sendEmail = async (payload: MailPayload) => {
       return tlsSocket;
     }
 
-    const tcpSocket = connectTcp({ host: targetHost, port: config.port });
+    const tcpSocket = connectTcp({ host: targetHost, port: targetPort });
     await waitForConnect(tcpSocket, config.connectionTimeoutMs);
     return tcpSocket;
   };
 
   let socket: Socket | TLSSocket | null = null;
+  let connectedPort = config.port;
   const attemptErrors: string[] = [];
 
-  for (const targetHost of connectionTargets) {
-    try {
-      socket = await connectToTarget(targetHost);
+  for (const targetPort of connectionPorts) {
+    for (const targetHost of connectionTargets) {
+      try {
+        socket = await connectToTarget(targetHost, targetPort);
+        connectedPort = targetPort;
+        break;
+      } catch (error) {
+        const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
+        attemptErrors.push(`${targetHost}:${targetPort}: ${errorMessage}`);
+      }
+    }
+
+    if (socket) {
       break;
-    } catch (error) {
-      const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
-      attemptErrors.push(`${targetHost}: ${errorMessage}`);
     }
   }
 
@@ -270,7 +328,9 @@ export const sendEmail = async (payload: MailPayload) => {
       ? attemptErrors.join(" | ")
       : "Nenhuma tentativa de conexão SMTP foi executada.";
 
-    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${attemptsSummary}`);
+    const helpMessage =
+      "Verifique SMTP_HOST/SMTP_PORT/SMTP_SECURE e confirme se o servidor permite tráfego de saída nessa porta.";
+    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${attemptsSummary}. ${helpMessage}`);
   }
 
   try {
@@ -282,7 +342,7 @@ export const sendEmail = async (payload: MailPayload) => {
 
     await sendCommand(socket, `EHLO ${config.host}`);
 
-    if (!config.secure) {
+    if (!resolveSecureMode(process.env.SMTP_SECURE?.trim().toLowerCase(), connectedPort)) {
       await sendCommand(socket, "STARTTLS");
       socket = await upgradeToTls(socket, config.host, config.connectionTimeoutMs);
       await sendCommand(socket, `EHLO ${config.host}`);
@@ -319,7 +379,7 @@ export const sendEmail = async (payload: MailPayload) => {
     await sendCommand(socket, "QUIT");
   } catch (error) {
     const message = getSafeErrorMessage(error, "Erro desconhecido durante o envio SMTP.");
-    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${message}`);
+    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${connectedPort}): ${message}`);
   } finally {
     socket.end();
   }

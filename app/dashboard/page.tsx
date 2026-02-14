@@ -158,6 +158,10 @@ export default function DashboardPage() {
     setPasswordForm((previous) => ({ ...previous, [field]: value }));
   };
 
+  const hasNationalIdValue = (nationalId: string, hasNationalId: boolean) => {
+    return hasNationalId || nationalId.trim().length > 0;
+  };
+
   const saveProfile = async (isFirstAccessCompletion: boolean) => {
     if (!profile || !sessionEmail) {
       return;
@@ -198,11 +202,10 @@ export default function DashboardPage() {
 
 
       const refreshedProfile: UserProfile = {
-
         ...profile,
         fullName: `${profile.firstName} ${profile.lastName}`.trim(),
         profileCompleted: true,
-        hasNationalId: true,
+        hasNationalId: hasNationalIdValue(profile.nationalId, profile.hasNationalId),
         isAdmin: profile.isAdmin,
       };
 
@@ -230,7 +233,13 @@ export default function DashboardPage() {
 
     setFirstAccessFeedback(null);
 
-    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel || !profile.nationalId) {
+    if (
+      !profile.birthDate ||
+      !profile.city ||
+      !profile.gender ||
+      !profile.educationLevel ||
+      !hasNationalIdValue(profile.nationalId, profile.hasNationalId)
+    ) {
       setFirstAccessFeedback(
         "Preencha NIF, data de nascimento, cidade, género e habilitações literárias para concluir o primeiro acesso."
       );
@@ -247,7 +256,13 @@ export default function DashboardPage() {
 
     setProfileFeedback(null);
 
-    if (!profile.birthDate || !profile.city || !profile.gender || !profile.educationLevel || !profile.nationalId) {
+    if (
+      !profile.birthDate ||
+      !profile.city ||
+      !profile.gender ||
+      !profile.educationLevel ||
+      !hasNationalIdValue(profile.nationalId, profile.hasNationalId)
+    ) {
       setProfileFeedback(
         "NIF, data de nascimento, cidade, género e habilitações literárias são obrigatórios."
       );
@@ -336,7 +351,11 @@ export default function DashboardPage() {
                   className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
                   inputMode="numeric"
                   maxLength={9}
-                  placeholder="Digite o seu NIF (9 dígitos)"
+                  placeholder={
+                    profile.hasNationalId
+                      ? "NIF já guardado. Digite apenas para atualizar"
+                      : "Digite o seu NIF (9 dígitos)"
+                  }
                   value={profile.nationalId}
                   onChange={(event) => handleProfileChange("nationalId", event.target.value)}
                 />
@@ -456,7 +475,11 @@ export default function DashboardPage() {
                 className="soft-gradient-input rounded-2xl border border-slate-200 px-4 py-3"
                 inputMode="numeric"
                 maxLength={9}
-                placeholder="Digite o seu NIF (9 dígitos)"
+                placeholder={
+                  profile.hasNationalId
+                    ? "NIF já guardado. Digite apenas para atualizar"
+                    : "Digite o seu NIF (9 dígitos)"
+                }
                 value={profile.nationalId}
                 onChange={(event) => handleProfileChange("nationalId", event.target.value)}
               />

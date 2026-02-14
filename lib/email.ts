@@ -2,6 +2,8 @@ type MailPayload = {
   to: string;
   subject: string;
   html: string;
+  text?: string;
+  replyTo?: string;
 };
 
 type ResendConfig = {
@@ -29,8 +31,6 @@ const getResendConfig = (): ResendConfig => {
     throw new Error("RESEND_TIMEOUT_MS inválida.");
   }
 
-
-
   return {
     apiKey,
     from,
@@ -49,7 +49,6 @@ const getSafeErrorMessage = (error: unknown, fallbackMessage: string) => {
 };
 
 export const sendEmail = async (payload: MailPayload) => {
-
   // Envia e-mail transacional via API HTTP do Resend para evitar bloqueios de saída em portas SMTP.
   const config = getResendConfig();
   const abortController = new AbortController();
@@ -67,10 +66,11 @@ export const sendEmail = async (payload: MailPayload) => {
         to: [payload.to],
         subject: payload.subject,
         html: payload.html,
+        text: payload.text,
+        reply_to: payload.replyTo,
       }),
       signal: abortController.signal,
     });
-
 
     if (!response.ok) {
       const responseText = await response.text();

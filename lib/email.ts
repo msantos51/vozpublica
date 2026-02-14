@@ -1,5 +1,7 @@
 import { Buffer } from "node:buffer";
+
 import { lookup } from "node:dns";
+
 import { Socket, connect as connectTcp } from "node:net";
 import { TLSSocket, connect as connectTls } from "node:tls";
 
@@ -186,11 +188,13 @@ const sendCommand = async (socket: Socket, command: string) => {
 export const sendEmail = async (payload: MailPayload) => {
   // Envia e-mail transacional via SMTP, suportando TLS direto (465) e STARTTLS (587).
   const config = getSmtpConfig();
+
   const smtpIpv4 = await resolveIpv4Address(config.host);
   let socket: Socket | TLSSocket;
 
   if (config.secure) {
     socket = connectTls({ host: smtpIpv4, port: config.port, servername: config.host });
+
     await new Promise<void>((resolve, reject) => {
       // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
       const onError = (error: Error) => {
@@ -222,7 +226,9 @@ export const sendEmail = async (payload: MailPayload) => {
       socket.setTimeout(config.connectionTimeoutMs);
     });
   } else {
+
     socket = connectTcp({ host: smtpIpv4, port: config.port });
+
     await waitForConnect(socket, config.connectionTimeoutMs);
   }
 

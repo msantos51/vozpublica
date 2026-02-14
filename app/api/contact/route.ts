@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+
 import { query } from "@/lib/database";
+
 import { sendEmail } from "@/lib/email";
 
 type ContactPayload = {
@@ -9,9 +11,11 @@ type ContactPayload = {
   message?: string;
 };
 
+
 type ContactMessageRow = {
   id: string;
 };
+
 
 const contactRecipient = "vozpublica.contacto@gmail.com";
 
@@ -27,6 +31,8 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+
+
 const normalizeContactMessage = (value: string) =>
   value
     .split("\n")
@@ -37,6 +43,7 @@ const normalizeContactMessage = (value: string) =>
 const isResendSandboxError = (errorMessage: string) =>
   errorMessage.toLowerCase().includes("you can only send testing emails");
 
+
 const getSafeErrorMessage = (error: unknown) => {
   // Normaliza mensagens inesperadas para evitar respostas técnicas ao utilizador final.
   if (error instanceof Error && error.message.trim()) {
@@ -45,6 +52,7 @@ const getSafeErrorMessage = (error: unknown) => {
 
   return "Falha inesperada ao processar contacto.";
 };
+
 
 export async function POST(request: Request) {
   let payload: ContactPayload;
@@ -61,7 +69,9 @@ export async function POST(request: Request) {
   const name = sanitizeText(payload.name || "");
   const email = sanitizeText(payload.email || "").toLowerCase();
   const subject = sanitizeText(payload.subject || "");
+
   const message = normalizeContactMessage(payload.message || "");
+
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json(
@@ -76,6 +86,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+
 
   const contactInsertResult = await query<ContactMessageRow>(
     `insert into contact_messages (
@@ -92,12 +103,15 @@ export async function POST(request: Request) {
 
   const contactId = contactInsertResult.rows[0]?.id;
 
+
   try {
     await sendEmail({
       to: contactRecipient,
       subject: `[Contacto] ${subject}`,
+
       replyTo: email,
       text: `Novo contacto recebido\n\nNome: ${name}\nE-mail: ${email}\nAssunto: ${subject}\n\nMensagem:\n${message}`,
+
       html: `
         <h2>Novo contacto recebido</h2>
         <p><strong>Nome:</strong> ${escapeHtml(name)}</p>
@@ -107,6 +121,7 @@ export async function POST(request: Request) {
         <p>${escapeHtml(message).replaceAll("\n", "<br />")}</p>
       `,
     });
+
 
     if (contactId) {
       await query("update contact_messages set email_delivery_status = 'sent', email_delivery_error = null where id = $1", [contactId]);
@@ -123,17 +138,22 @@ export async function POST(request: Request) {
       );
     }
 
+
     if (isResendSandboxError(safeMessage)) {
       return NextResponse.json(
         {
           message:
+
             "Mensagem recebida com sucesso. O envio automático por e-mail está em modo de testes, mas a equipa já recebeu o seu pedido internamente.",
         },
+
       );
     }
 
     return NextResponse.json(
+
       { message: "Mensagem recebida com sucesso. Caso necessário, a equipa poderá contactar por e-mail." },
     );
+
   }
 }

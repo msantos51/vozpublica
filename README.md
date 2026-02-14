@@ -82,9 +82,17 @@ RESEND_API_URL=https://api.resend.com/emails
 
 # Opcional: timeout da chamada HTTP em milissegundos
 RESEND_TIMEOUT_MS=10000
+
+
+# Recomendado: URL pública da aplicação para links dos e-mails
+APP_BASE_URL=https://vozpublica.onrender.com
+
 ```
 
 Notas importantes para Resend:
 - `RESEND_API_KEY` é obrigatória para autorizar o envio.
 - `RESEND_FROM` deve usar um remetente válido no Resend (domínio verificado em produção).
 - `onboarding@resend.dev` pode ser usado para testes iniciais, seguindo as regras da conta.
+
+- Se não definir `APP_BASE_URL`, o sistema tenta `NEXT_PUBLIC_APP_URL`, `VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_URL` e `RENDER_EXTERNAL_URL`; em último caso usa `http://localhost:3000`.
+

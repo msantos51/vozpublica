@@ -1,4 +1,27 @@
-const appBaseUrl = process.env.APP_BASE_URL?.trim() || "http://localhost:3000";
+const normalizeBaseUrl = (rawUrl: string) => {
+  // Remove espaços e barra final para evitar URLs duplicadas com "//" ao concatenar paths.
+  const sanitizedUrl = rawUrl.trim().replace(/\/+$/, "");
+
+  // Prefixa protocolo HTTPS quando a variável vier só com host (ex.: domínio sem esquema).
+  if (!/^https?:\/\//i.test(sanitizedUrl)) {
+    return `https://${sanitizedUrl}`;
+  }
+
+  return sanitizedUrl;
+};
+
+const resolveAppBaseUrl = () => {
+  // Resolve a URL pública da aplicação com fallback entre variáveis comuns de deploy.
+  const rawBaseUrl =
+    process.env.APP_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim() ||
+    process.env.RENDER_EXTERNAL_URL?.trim() ||
+    "http://localhost:3000";
+
+  return normalizeBaseUrl(rawBaseUrl);
+};
 
 const createLayout = (title: string, description: string, buttonLabel: string, buttonUrl: string) => {
   // Gera HTML padronizado para e-mails de autenticação com CTA principal.
@@ -19,6 +42,7 @@ const createLayout = (title: string, description: string, buttonLabel: string, b
 
 export const createEmailConfirmationTemplate = (token: string) => {
   // Monta o conteúdo do e-mail de confirmação de conta para ativar o primeiro acesso.
+  const appBaseUrl = resolveAppBaseUrl();
   const confirmationUrl = `${appBaseUrl}/api/auth/confirm-email?token=${encodeURIComponent(token)}`;
 
   return {
@@ -34,6 +58,7 @@ export const createEmailConfirmationTemplate = (token: string) => {
 
 export const createPasswordResetTemplate = (token: string) => {
   // Monta o conteúdo do e-mail de reposição de palavra-passe com validade limitada.
+  const appBaseUrl = resolveAppBaseUrl();
   const resetUrl = `${appBaseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
   return {

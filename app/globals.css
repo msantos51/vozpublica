@@ -30,6 +30,25 @@ body {
   font-family: var(--font-sans);
 }
 
+
+/* Adiciona transição suave para o efeito visual de todos os botões interativos. */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+/* Aplica sombra apenas no hover para destacar o botão sob o cursor. */
+button:hover,
+[role="button"]:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+  box-shadow: 0 10px 24px #fea076;
+}
+
 @layer components {
   /* Uniformiza a dimensão de todos os botões com base no botão de login da home. */
   .button-size-login {

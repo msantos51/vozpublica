@@ -27,7 +27,7 @@ type UpdatePayload = {
   city: string;
   gender: string;
   educationLevel: string;
-  nationalId: string;
+  nationalId?: string;
 };
 
 const allowedGender = ["male", "female"];
@@ -98,9 +98,9 @@ export const PUT = async (request: Request) => {
     );
   }
 
-  if (!payload.nationalId || !payload.birthDate || !payload.city || !payload.gender || !payload.educationLevel) {
+  if (!payload.birthDate || !payload.city || !payload.gender || !payload.educationLevel) {
     return NextResponse.json(
-      { message: "NIF, data de nascimento, cidade, género e habilitações são obrigatórios." },
+      { message: "Data de nascimento, cidade, género e habilitações são obrigatórios." },
       { status: 400 }
     );
   }
@@ -116,27 +116,43 @@ export const PUT = async (request: Request) => {
     );
   }
 
-
-  const normalizedNationalId = normalizeNationalId(payload.nationalId);
-
-  if (!isValidNationalIdFormat(normalizedNationalId)) {
-    return NextResponse.json(
-      { message: "O NIF deve conter exatamente 9 dígitos." },
-      { status: 400 }
-    );
-  }
-
-  const nationalIdHash = hashNationalId(normalizedNationalId);
-
-  const conflictingNationalId = await query<UserRow>(
-    "select id from users where national_id_hash = $1 and id <> $2",
-    [nationalIdHash, session.userId]
+  const currentUser = await query<Pick<UserRow, "national_id_hash">>(
+    "select national_id_hash from users where id = $1",
+    [session.userId]
   );
 
-  if (conflictingNationalId.rowCount) {
+  if (!currentUser.rows[0]) {
+    return NextResponse.json({ message: "Utilizador não encontrado." }, { status: 404 });
+  }
+
+  const normalizedNationalId = normalizeNationalId(payload.nationalId ?? "");
+  let nationalIdHash = currentUser.rows[0].national_id_hash;
+
+  if (normalizedNationalId) {
+    if (!isValidNationalIdFormat(normalizedNationalId)) {
+      return NextResponse.json(
+        { message: "O NIF deve conter exatamente 9 dígitos." },
+        { status: 400 }
+      );
+    }
+
+    nationalIdHash = hashNationalId(normalizedNationalId);
+
+    const conflictingNationalId = await query<UserRow>(
+      "select id from users where national_id_hash = $1 and id <> $2",
+      [nationalIdHash, session.userId]
+    );
+
+    if (conflictingNationalId.rowCount) {
+      return NextResponse.json(
+        { message: "Já existe uma conta associada a este NIF." },
+        { status: 409 }
+      );
+    }
+  } else if (!nationalIdHash) {
     return NextResponse.json(
-      { message: "Já existe uma conta associada a este NIF." },
-      { status: 409 }
+      { message: "O NIF é obrigatório para concluir o perfil." },
+      { status: 400 }
     );
   }
   const normalizedEmail = payload.email.trim().toLowerCase();

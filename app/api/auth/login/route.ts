@@ -22,6 +22,7 @@ type UserRow = {
   profile_completed: boolean;
   is_admin: boolean;
   password_hash: string;
+  email_confirmed: boolean;
 };
 
 export const POST = async (request: Request) => {
@@ -37,7 +38,7 @@ export const POST = async (request: Request) => {
 
   const normalizedEmail = payload.email.trim().toLowerCase();
   const result = await query<UserRow>(
-    `select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed, is_admin, password_hash
+    `select id, first_name, last_name, full_name, email, birth_date, city, gender, education_level, profile_completed, is_admin, password_hash, email_confirmed
      from users
      where email = $1`,
     [normalizedEmail]
@@ -49,6 +50,13 @@ export const POST = async (request: Request) => {
     return NextResponse.json(
       { message: "E-mail ou senha inválidos. Verifique os dados e tente novamente." },
       { status: 401 }
+    );
+  }
+
+  if (!user.email_confirmed) {
+    return NextResponse.json(
+      { message: "Confirme o seu e-mail antes de iniciar sessão." },
+      { status: 403 }
     );
   }
 

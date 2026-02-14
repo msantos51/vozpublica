@@ -29,6 +29,8 @@ type PasswordForm = {
   confirmNewPassword: string;
 };
 
+type StoredUserProfile = Pick<UserProfile, "email" | "nationalId">;
+
 type ProfileResponse = {
   user?: {
     firstName: string;
@@ -53,6 +55,27 @@ type UpdateResponse = {
 const userStorageKey = "vp_user";
 const sessionStorageKey = "vp_session";
 const preferencesStorageKey = "vp_preferences";
+
+const getStoredNationalId = (email: string) => {
+  // Reutiliza o NIF previamente guardado no browser para o mesmo e-mail.
+  const storedUserRaw = localStorage.getItem(userStorageKey);
+
+  if (!storedUserRaw) {
+    return "";
+  }
+
+  try {
+    const storedUser = JSON.parse(storedUserRaw) as StoredUserProfile;
+
+    if (storedUser.email === email) {
+      return storedUser.nationalId ?? "";
+    }
+  } catch (error) {
+    return "";
+  }
+
+  return "";
+};
 
 const educationOptions = [
   { value: "6th_grade", label: "6º Ano" },
@@ -121,7 +144,7 @@ export default function DashboardPage() {
           city: data.user.city ?? "",
           gender: data.user.gender ?? "",
           educationLevel: data.user.educationLevel ?? "",
-          nationalId: "",
+          nationalId: getStoredNationalId(data.user.email),
           hasNationalId: data.user.hasNationalId,
           profileCompleted: data.user.profileCompleted,
           isAdmin: data.user.isAdmin,

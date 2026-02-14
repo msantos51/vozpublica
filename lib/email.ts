@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
-import { TLSSocket, connect } from "node:tls";
+import { Socket, connect as connectTcp } from "node:net";
+import { TLSSocket, connect as connectTls } from "node:tls";
 
 type MailPayload = {
   to: string;
@@ -13,6 +14,8 @@ type SmtpConfig = {
   username: string;
   password: string;
   from: string;
+  secure: boolean;
+  connectionTimeoutMs: number;
 };
 
 const defaultSender = "vozpublica.contacto@gmail.com";
@@ -24,6 +27,8 @@ const getSmtpConfig = (): SmtpConfig => {
   const username = process.env.SMTP_USER?.trim() || defaultSender;
   const password = process.env.SMTP_PASS?.trim() || "";
   const from = process.env.SMTP_FROM?.trim() || defaultSender;
+  const secureFromEnv = process.env.SMTP_SECURE?.trim().toLowerCase();
+  const timeoutFromEnv = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS?.trim() || "10000");
 
   if (!password) {
     throw new Error("SMTP_PASS não está definida para envio de e-mails transacionais.");
@@ -33,7 +38,14 @@ const getSmtpConfig = (): SmtpConfig => {
     throw new Error("SMTP_PORT inválida.");
   }
 
-  return { host, port, username, password, from };
+  if (!Number.isFinite(timeoutFromEnv) || timeoutFromEnv <= 0) {
+    throw new Error("SMTP_CONNECTION_TIMEOUT_MS inválida.");
+  }
+
+  const secure =
+    secureFromEnv === "true" ? true : secureFromEnv === "false" ? false : port === 465;
+
+  return { host, port, username, password, from, secure, connectionTimeoutMs: timeoutFromEnv };
 };
 
 const encodeHeader = (value: string) => {
@@ -43,7 +55,7 @@ const encodeHeader = (value: string) => {
 
 const normalizeLineBreaks = (value: string) => value.replace(/\r?\n/g, "\r\n");
 
-const waitForResponse = (socket: TLSSocket) =>
+const waitForResponse = (socket: Socket) =>
   new Promise<{ code: number; raw: string }>((resolve, reject) => {
     const chunks: string[] = [];
 
@@ -57,9 +69,7 @@ const waitForResponse = (socket: TLSSocket) =>
         return;
       }
 
-      const isMultiline = /^\d{3}-/.test(lastLine);
-
-      if (isMultiline) {
+      if (/^\d{3}-/.test(lastLine)) {
         return;
       }
 
@@ -81,7 +91,73 @@ const waitForResponse = (socket: TLSSocket) =>
     socket.on("error", onError);
   });
 
-const sendCommand = async (socket: TLSSocket, command: string) => {
+const waitForConnect = (socket: Socket, timeoutMs: number) =>
+  new Promise<void>((resolve, reject) => {
+    // Garante timeout explícito de conexão para evitar espera indefinida quando SMTP está indisponível.
+    const onError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    const onTimeout = () => {
+      cleanup();
+      socket.destroy();
+      reject(new Error(`Timeout ao conectar ao servidor SMTP após ${timeoutMs}ms.`));
+    };
+
+    const onConnect = () => {
+      cleanup();
+      resolve();
+    };
+
+    const cleanup = () => {
+      socket.off("error", onError);
+      socket.off("timeout", onTimeout);
+      socket.off("connect", onConnect);
+      socket.setTimeout(0);
+    };
+
+    socket.once("error", onError);
+    socket.once("timeout", onTimeout);
+    socket.once("connect", onConnect);
+    socket.setTimeout(timeoutMs);
+  });
+
+const upgradeToTls = (socket: Socket, host: string, timeoutMs: number) =>
+  new Promise<TLSSocket>((resolve, reject) => {
+    // Atualiza conexão SMTP plaintext para TLS via STARTTLS sem abrir um novo socket.
+    const tlsSocket = connectTls({ socket, servername: host });
+
+    const onSecureConnect = () => {
+      cleanup();
+      resolve(tlsSocket);
+    };
+
+    const onError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    const onTimeout = () => {
+      cleanup();
+      tlsSocket.destroy();
+      reject(new Error(`Timeout no handshake TLS após ${timeoutMs}ms.`));
+    };
+
+    const cleanup = () => {
+      tlsSocket.off("secureConnect", onSecureConnect);
+      tlsSocket.off("error", onError);
+      tlsSocket.off("timeout", onTimeout);
+      tlsSocket.setTimeout(0);
+    };
+
+    tlsSocket.once("secureConnect", onSecureConnect);
+    tlsSocket.once("error", onError);
+    tlsSocket.once("timeout", onTimeout);
+    tlsSocket.setTimeout(timeoutMs);
+  });
+
+const sendCommand = async (socket: Socket, command: string) => {
   // Envia comando SMTP e valida resposta de sucesso para manter o fluxo consistente.
   socket.write(`${command}\r\n`);
   const response = await waitForResponse(socket);
@@ -94,14 +170,46 @@ const sendCommand = async (socket: TLSSocket, command: string) => {
 };
 
 export const sendEmail = async (payload: MailPayload) => {
-  // Envia e-mail transacional via SMTP seguro com autenticação AUTH LOGIN.
+  // Envia e-mail transacional via SMTP, suportando TLS direto (465) e STARTTLS (587).
   const config = getSmtpConfig();
-  const socket = connect({ host: config.host, port: config.port, servername: config.host });
+  let socket: Socket | TLSSocket;
 
-  await new Promise<void>((resolve, reject) => {
-    socket.once("secureConnect", resolve);
-    socket.once("error", reject);
-  });
+  if (config.secure) {
+    socket = connectTls({ host: config.host, port: config.port, servername: config.host, family: 4 });
+    await new Promise<void>((resolve, reject) => {
+      // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
+      const onError = (error: Error) => {
+        cleanup();
+        reject(error);
+      };
+
+      const onTimeout = () => {
+        cleanup();
+        socket.destroy();
+        reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
+      };
+
+      const onSecureConnect = () => {
+        cleanup();
+        resolve();
+      };
+
+      const cleanup = () => {
+        socket.off("secureConnect", onSecureConnect);
+        socket.off("error", onError);
+        socket.off("timeout", onTimeout);
+        socket.setTimeout(0);
+      };
+
+      socket.once("secureConnect", onSecureConnect);
+      socket.once("error", onError);
+      socket.once("timeout", onTimeout);
+      socket.setTimeout(config.connectionTimeoutMs);
+    });
+  } else {
+    socket = connectTcp({ host: config.host, port: config.port, family: 4 });
+    await waitForConnect(socket, config.connectionTimeoutMs);
+  }
 
   try {
     const greeting = await waitForResponse(socket);
@@ -111,6 +219,13 @@ export const sendEmail = async (payload: MailPayload) => {
     }
 
     await sendCommand(socket, `EHLO ${config.host}`);
+
+    if (!config.secure) {
+      await sendCommand(socket, "STARTTLS");
+      socket = await upgradeToTls(socket, config.host, config.connectionTimeoutMs);
+      await sendCommand(socket, `EHLO ${config.host}`);
+    }
+
     await sendCommand(socket, "AUTH LOGIN");
     await sendCommand(socket, Buffer.from(config.username).toString("base64"));
     await sendCommand(socket, Buffer.from(config.password).toString("base64"));
@@ -140,6 +255,9 @@ export const sendEmail = async (payload: MailPayload) => {
     }
 
     await sendCommand(socket, "QUIT");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro desconhecido.";
+    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${message}`);
   } finally {
     socket.end();
   }

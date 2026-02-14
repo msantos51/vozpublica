@@ -36,6 +36,11 @@ body {
     @apply inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold whitespace-nowrap;
   }
 
+  /* Aplica tipografia consistente para texto de botões fora do estilo principal arredondado. */
+  .button-text-standard {
+    @apply text-sm font-semibold;
+  }
+
   /* Define estilos consistentes para títulos e subtítulos em todo o site. */
   .page-title {
     @apply text-3xl font-semibold text-[color:var(--foreground)];

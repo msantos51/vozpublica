@@ -26,10 +26,10 @@ export default function TopNav() {
     const isActive = pathname === href;
 
     if (isActive) {
-      return "rounded-full bg-[color:var(--primary)] px-4 py-2 text-white transition";
+      return "button-text-standard rounded-full bg-[color:var(--primary)] px-4 py-2 text-white transition";
     }
 
-    return "rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700";
+    return "button-text-standard rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700";
   };
 
   return (
@@ -38,7 +38,7 @@ export default function TopNav() {
       <button
         aria-expanded={isMobileMenuOpen}
         aria-label="Abrir menu principal"
-        className="flex w-full items-center justify-between rounded-full bg-[color:var(--surface)] px-4 py-2 text-sm font-medium text-slate-700 shadow-sm md:hidden"
+        className="button-text-standard flex w-full items-center justify-between rounded-full bg-[color:var(--surface)] px-4 py-2 text-slate-700 shadow-sm md:hidden"
         onClick={() => setIsMobileMenuOpen((previous) => !previous)}
         type="button"
       >

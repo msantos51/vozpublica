@@ -73,6 +73,19 @@ const initializeDatabase = async (): Promise<void> => {
         )
       `);
 
+      await pool.query(`
+        create table if not exists contact_messages (
+          id uuid primary key default gen_random_uuid(),
+          name text not null,
+          email text not null,
+          subject text not null,
+          message text not null,
+          email_delivery_status text not null default 'pending',
+          email_delivery_error text,
+          created_at timestamptz not null default now()
+        )
+      `);
+
       // Mantém compatibilidade com bases de dados criadas antes desta versão.
       await pool.query("alter table users add column if not exists first_name text");
       await pool.query("alter table users add column if not exists last_name text");
@@ -128,6 +141,9 @@ const initializeDatabase = async (): Promise<void> => {
         "create unique index if not exists poll_votes_poll_user_unique on poll_votes(poll_id, user_id)"
       );
       await pool.query("create index if not exists poll_votes_poll_id_idx on poll_votes(poll_id)");
+      await pool.query(
+        "create index if not exists contact_messages_created_at_idx on contact_messages(created_at desc)"
+      );
 
       // Converte contas antigas para o novo formato de nome para evitar dados incompletos.
       await pool.query(`

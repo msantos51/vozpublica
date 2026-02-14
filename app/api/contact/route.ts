@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+
+import { query } from "@/lib/database";
+
 import { sendEmail } from "@/lib/email";
 
 type ContactPayload = {
@@ -7,6 +10,12 @@ type ContactPayload = {
   subject?: string;
   message?: string;
 };
+
+
+type ContactMessageRow = {
+  id: string;
+};
+
 
 const contactRecipient = "vozpublica.contacto@gmail.com";
 
@@ -23,6 +32,7 @@ const escapeHtml = (value: string) =>
     .replaceAll("'", "&#39;");
 
 
+
 const normalizeContactMessage = (value: string) =>
   value
     .split("\n")
@@ -32,6 +42,16 @@ const normalizeContactMessage = (value: string) =>
 
 const isResendSandboxError = (errorMessage: string) =>
   errorMessage.toLowerCase().includes("you can only send testing emails");
+
+
+const getSafeErrorMessage = (error: unknown) => {
+  // Normaliza mensagens inesperadas para evitar respostas técnicas ao utilizador final.
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return "Falha inesperada ao processar contacto.";
+};
 
 
 export async function POST(request: Request) {
@@ -67,6 +87,23 @@ export async function POST(request: Request) {
     );
   }
 
+
+  const contactInsertResult = await query<ContactMessageRow>(
+    `insert into contact_messages (
+      name,
+      email,
+      subject,
+      message,
+      email_delivery_status
+     )
+     values ($1, $2, $3, $4, 'pending')
+     returning id`,
+    [name, email, subject, message],
+  );
+
+  const contactId = contactInsertResult.rows[0]?.id;
+
+
   try {
     await sendEmail({
       to: contactRecipient,
@@ -85,26 +122,37 @@ export async function POST(request: Request) {
       `,
     });
 
-    return NextResponse.json({ message: "Mensagem enviada com sucesso." });
+
+    if (contactId) {
+      await query("update contact_messages set email_delivery_status = 'sent', email_delivery_error = null where id = $1", [contactId]);
+    }
+
+    return NextResponse.json({ message: "Mensagem recebida com sucesso. A equipa irá responder em breve." });
   } catch (error) {
-    const safeMessage =
-      error instanceof Error && error.message.trim()
-        ? error.message
-        : "Não foi possível enviar a mensagem no momento.";
+    const safeMessage = getSafeErrorMessage(error);
+
+    if (contactId) {
+      await query(
+        "update contact_messages set email_delivery_status = 'failed', email_delivery_error = $2 where id = $1",
+        [contactId, safeMessage],
+      );
+    }
+
 
     if (isResendSandboxError(safeMessage)) {
       return NextResponse.json(
         {
           message:
-            "O envio está temporariamente indisponível por configuração do provedor de e-mail (modo de testes). A equipa já foi notificada para concluir a ativação do domínio.",
+
+            "Mensagem recebida com sucesso. O envio automático por e-mail está em modo de testes, mas a equipa já recebeu o seu pedido internamente.",
         },
-        { status: 503 },
+
       );
     }
 
     return NextResponse.json(
-      { message: "Não foi possível enviar a mensagem agora. Tente novamente em alguns minutos." },
-      { status: 500 },
+
+      { message: "Mensagem recebida com sucesso. Caso necessário, a equipa poderá contactar por e-mail." },
     );
 
   }

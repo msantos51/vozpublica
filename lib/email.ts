@@ -51,16 +51,17 @@ const getSmtpConfig = (): SmtpConfig => {
   return { host, port, username, password, from, secure, connectionTimeoutMs: timeoutFromEnv };
 };
 
-const resolveIpv4Address = async (host: string) =>
-  new Promise<string>((resolve, reject) => {
-    // Resolve explicitamente IPv4 para reduzir falhas em ambientes com rota IPv6 instável.
-    lookup(host, { family: 4, all: false }, (error, address) => {
-      if (error || !address) {
+const resolveIpv4Addresses = async (host: string) =>
+  new Promise<string[]>((resolve, reject) => {
+    // Resolve todos os IPv4 disponíveis para permitir fallback quando um IP específico está inacessível.
+    lookup(host, { family: 4, all: true }, (error, addresses) => {
+      if (error || !addresses.length) {
         reject(error ?? new Error(`Não foi possível resolver IPv4 para ${host}.`));
         return;
       }
 
-      resolve(address);
+      const uniqueAddresses = Array.from(new Set(addresses.map((entry) => entry.address)));
+      resolve(uniqueAddresses);
     });
   });
 
@@ -70,6 +71,15 @@ const encodeHeader = (value: string) => {
 };
 
 const normalizeLineBreaks = (value: string) => value.replace(/\r?\n/g, "\r\n");
+
+const getSafeErrorMessage = (error: unknown, fallbackMessage: string) => {
+  // Normaliza mensagens de erro para nunca devolver texto vazio nos logs e na resposta final.
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return fallbackMessage;
+};
 
 const waitForResponse = (socket: Socket) =>
   new Promise<{ code: number; raw: string }>((resolve, reject) => {
@@ -189,47 +199,80 @@ export const sendEmail = async (payload: MailPayload) => {
   // Envia e-mail transacional via SMTP, suportando TLS direto (465) e STARTTLS (587).
   const config = getSmtpConfig();
 
-  const smtpIpv4 = await resolveIpv4Address(config.host);
-  let socket: Socket | TLSSocket;
+  let ipv4Addresses: string[] = [];
 
-  if (config.secure) {
-    socket = connectTls({ host: smtpIpv4, port: config.port, servername: config.host });
+  try {
+    ipv4Addresses = await resolveIpv4Addresses(config.host);
+  } catch {
+    // Mantém fallback para hostname quando a resolução manual de IPv4 falha neste ambiente.
+    ipv4Addresses = [];
+  }
 
-    await new Promise<void>((resolve, reject) => {
-      // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
-      const onError = (error: Error) => {
-        cleanup();
-        reject(error);
-      };
+  const connectionTargets = [...ipv4Addresses, config.host];
 
-      const onTimeout = () => {
-        cleanup();
-        socket.destroy();
-        reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
-      };
+  const connectToTarget = async (targetHost: string) => {
+    // Tenta conexão por destino individual para permitir múltiplas tentativas com timeout controlado.
+    if (config.secure) {
+      const tlsSocket = connectTls({ host: targetHost, port: config.port, servername: config.host });
 
-      const onSecureConnect = () => {
-        cleanup();
-        resolve();
-      };
+      await new Promise<void>((resolve, reject) => {
+        // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
+        const onError = (error: Error) => {
+          cleanup();
+          reject(error);
+        };
 
-      const cleanup = () => {
-        socket.off("secureConnect", onSecureConnect);
-        socket.off("error", onError);
-        socket.off("timeout", onTimeout);
-        socket.setTimeout(0);
-      };
+        const onTimeout = () => {
+          cleanup();
+          tlsSocket.destroy();
+          reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
+        };
 
-      socket.once("secureConnect", onSecureConnect);
-      socket.once("error", onError);
-      socket.once("timeout", onTimeout);
-      socket.setTimeout(config.connectionTimeoutMs);
-    });
-  } else {
+        const onSecureConnect = () => {
+          cleanup();
+          resolve();
+        };
 
-    socket = connectTcp({ host: smtpIpv4, port: config.port });
+        const cleanup = () => {
+          tlsSocket.off("secureConnect", onSecureConnect);
+          tlsSocket.off("error", onError);
+          tlsSocket.off("timeout", onTimeout);
+          tlsSocket.setTimeout(0);
+        };
 
-    await waitForConnect(socket, config.connectionTimeoutMs);
+        tlsSocket.once("secureConnect", onSecureConnect);
+        tlsSocket.once("error", onError);
+        tlsSocket.once("timeout", onTimeout);
+        tlsSocket.setTimeout(config.connectionTimeoutMs);
+      });
+
+      return tlsSocket;
+    }
+
+    const tcpSocket = connectTcp({ host: targetHost, port: config.port });
+    await waitForConnect(tcpSocket, config.connectionTimeoutMs);
+    return tcpSocket;
+  };
+
+  let socket: Socket | TLSSocket | null = null;
+  const attemptErrors: string[] = [];
+
+  for (const targetHost of connectionTargets) {
+    try {
+      socket = await connectToTarget(targetHost);
+      break;
+    } catch (error) {
+      const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
+      attemptErrors.push(`${targetHost}: ${errorMessage}`);
+    }
+  }
+
+  if (!socket) {
+    const attemptsSummary = attemptErrors.length
+      ? attemptErrors.join(" | ")
+      : "Nenhuma tentativa de conexão SMTP foi executada.";
+
+    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${attemptsSummary}`);
   }
 
   try {
@@ -277,7 +320,7 @@ export const sendEmail = async (payload: MailPayload) => {
 
     await sendCommand(socket, "QUIT");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido.";
+    const message = getSafeErrorMessage(error, "Erro desconhecido durante o envio SMTP.");
     throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${message}`);
   } finally {
     socket.end();

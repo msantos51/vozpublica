@@ -45,11 +45,16 @@ export const POST = async (request: Request) => {
     );
 
     const template = createPasswordResetTemplate(token);
-    await sendEmail({
-      to: user.email,
-      subject: template.subject,
-      html: template.html,
-    });
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: template.subject,
+        html: template.html,
+      });
+    } catch (error) {
+      // Evita falha do endpoint quando o SMTP estiver indisponível, mantendo resposta neutra por segurança.
+      console.error("Falha ao enviar e-mail de recuperação de password:", error);
+    }
   }
 
   return NextResponse.json({

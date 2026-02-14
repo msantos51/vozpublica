@@ -1,8 +1,6 @@
 "use client";
 
-
 import { FormEvent, useState } from "react";
-
 
 type FormData = {
   name: string;
@@ -13,6 +11,7 @@ type FormData = {
 
 type ContactApiResponse = {
   message?: string;
+  reference?: string;
 };
 
 const initialFormData: FormData = {
@@ -25,6 +24,7 @@ const initialFormData: FormData = {
 export default function ContactPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [statusMessage, setStatusMessage] = useState("");
+  const [statusReference, setStatusReference] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,6 +39,7 @@ export default function ContactPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatusMessage("");
+    setStatusReference("");
     setIsSuccess(false);
     setIsSubmitting(true);
 
@@ -52,13 +53,14 @@ export default function ContactPage() {
       });
 
       const data = (await response.json()) as ContactApiResponse;
+      setStatusReference(data.reference || "");
 
       if (!response.ok) {
-        setStatusMessage(data.message || "Não foi possível receber a sua mensagem.");
+        setStatusMessage(data.message || "Não foi possível enviar a sua mensagem.");
         return;
       }
 
-      setStatusMessage(data.message || "Mensagem recebida com sucesso.");
+      setStatusMessage(data.message || "Mensagem enviada com sucesso.");
       setIsSuccess(true);
       setFormData(initialFormData);
     } catch {
@@ -144,13 +146,16 @@ export default function ContactPage() {
                 <p className="text-xs text-justify text-slate-500">Responderemos em até 2 dias úteis.</p>
               </div>
               {statusMessage ? (
-                <p
-                  className={`text-sm md:col-span-2 ${
-                    isSuccess ? "text-emerald-700" : "text-rose-700"
-                  }`}
-                >
-                  {statusMessage}
-                </p>
+                <div className="md:col-span-2 space-y-1">
+                  <p className={`text-sm ${isSuccess ? "text-emerald-700" : "text-rose-700"}`}>
+                    {statusMessage}
+                  </p>
+                  {statusReference ? (
+                    <p className="text-xs text-slate-500">
+                      Referência da mensagem: <span className="font-semibold">{statusReference}</span>
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
             </form>
           </div>

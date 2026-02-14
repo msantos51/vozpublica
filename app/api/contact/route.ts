@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-
 import { query } from "@/lib/database";
-
 import { sendEmail } from "@/lib/email";
 
 type ContactPayload = {
@@ -11,11 +9,9 @@ type ContactPayload = {
   message?: string;
 };
 
-
 type ContactMessageRow = {
   id: string;
 };
-
 
 const contactRecipient = "vozpublica.contacto@gmail.com";
 
@@ -31,8 +27,6 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
-
-
 const normalizeContactMessage = (value: string) =>
   value
     .split("\n")
@@ -43,7 +37,6 @@ const normalizeContactMessage = (value: string) =>
 const isResendSandboxError = (errorMessage: string) =>
   errorMessage.toLowerCase().includes("you can only send testing emails");
 
-
 const getSafeErrorMessage = (error: unknown) => {
   // Normaliza mensagens inesperadas para evitar respostas técnicas ao utilizador final.
   if (error instanceof Error && error.message.trim()) {
@@ -52,7 +45,6 @@ const getSafeErrorMessage = (error: unknown) => {
 
   return "Falha inesperada ao processar contacto.";
 };
-
 
 export async function POST(request: Request) {
   let payload: ContactPayload;
@@ -69,9 +61,7 @@ export async function POST(request: Request) {
   const name = sanitizeText(payload.name || "");
   const email = sanitizeText(payload.email || "").toLowerCase();
   const subject = sanitizeText(payload.subject || "");
-
   const message = normalizeContactMessage(payload.message || "");
-
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json(
@@ -86,7 +76,6 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-
 
   const contactInsertResult = await query<ContactMessageRow>(
     `insert into contact_messages (
@@ -103,15 +92,19 @@ export async function POST(request: Request) {
 
   const contactId = contactInsertResult.rows[0]?.id;
 
+  if (!contactId) {
+    return NextResponse.json(
+      { message: "Não foi possível registar a sua mensagem. Tente novamente." },
+      { status: 500 },
+    );
+  }
 
   try {
     await sendEmail({
       to: contactRecipient,
       subject: `[Contacto] ${subject}`,
-
       replyTo: email,
       text: `Novo contacto recebido\n\nNome: ${name}\nE-mail: ${email}\nAssunto: ${subject}\n\nMensagem:\n${message}`,
-
       html: `
         <h2>Novo contacto recebido</h2>
         <p><strong>Nome:</strong> ${escapeHtml(name)}</p>
@@ -122,38 +115,48 @@ export async function POST(request: Request) {
       `,
     });
 
+    await query(
+      "update contact_messages set email_delivery_status = 'sent', email_delivery_error = null where id = $1",
+      [contactId],
+    );
 
-    if (contactId) {
-      await query("update contact_messages set email_delivery_status = 'sent', email_delivery_error = null where id = $1", [contactId]);
-    }
-
-    return NextResponse.json({ message: "Mensagem recebida com sucesso. A equipa irá responder em breve." });
+    return NextResponse.json({
+      message: "Mensagem enviada com sucesso para a equipa.",
+      reference: contactId,
+    });
   } catch (error) {
     const safeMessage = getSafeErrorMessage(error);
 
-    if (contactId) {
-      await query(
-        "update contact_messages set email_delivery_status = 'failed', email_delivery_error = $2 where id = $1",
-        [contactId, safeMessage],
-      );
-    }
+    // Regista erro técnico no servidor para facilitar diagnóstico de configuração do provedor.
+    console.error("Contact e-mail delivery failed", {
+      contactId,
+      safeMessage,
+      recipient: contactRecipient,
+    });
 
+    await query(
+      "update contact_messages set email_delivery_status = 'failed', email_delivery_error = $2 where id = $1",
+      [contactId, safeMessage],
+    );
 
     if (isResendSandboxError(safeMessage)) {
       return NextResponse.json(
         {
           message:
-
-            "Mensagem recebida com sucesso. O envio automático por e-mail está em modo de testes, mas a equipa já recebeu o seu pedido internamente.",
+            "A sua mensagem foi registada, mas o envio para vozpublica.contacto@gmail.com falhou porque a conta de e-mail está em modo de testes. Verifique a configuração do domínio no Resend.",
+          reference: contactId,
         },
-
+        { status: 503 },
       );
     }
 
     return NextResponse.json(
-
-      { message: "Mensagem recebida com sucesso. Caso necessário, a equipa poderá contactar por e-mail." },
+      {
+        message:
+          "A sua mensagem foi registada, mas não foi possível enviar o e-mail para vozpublica.contacto@gmail.com neste momento.",
+        reference: contactId,
+      },
+      { status: 502 },
     );
-
   }
 }

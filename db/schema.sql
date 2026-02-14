@@ -15,6 +15,11 @@ create table if not exists users (
   gender text,
   education_level text,
   profile_completed boolean not null default false,
+  email_confirmed boolean not null default true,
+  email_confirmation_token_hash text,
+  email_confirmation_sent_at timestamptz,
+  password_reset_token_hash text,
+  password_reset_expires_at timestamptz,
   is_admin boolean not null default false,
   password_hash text not null,
   created_at timestamptz not null default now()

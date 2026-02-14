@@ -35,6 +35,11 @@ const initializeDatabase = async (): Promise<void> => {
           gender text,
           education_level text,
           profile_completed boolean not null default false,
+          email_confirmed boolean not null default true,
+          email_confirmation_token_hash text,
+          email_confirmation_sent_at timestamptz,
+          password_reset_token_hash text,
+          password_reset_expires_at timestamptz,
           is_admin boolean not null default false,
           password_hash text not null,
           created_at timestamptz not null default now()
@@ -80,6 +85,11 @@ const initializeDatabase = async (): Promise<void> => {
       await pool.query(
         "alter table users add column if not exists profile_completed boolean not null default false"
       );
+      await pool.query("alter table users add column if not exists email_confirmed boolean not null default true");
+      await pool.query("alter table users add column if not exists email_confirmation_token_hash text");
+      await pool.query("alter table users add column if not exists email_confirmation_sent_at timestamptz");
+      await pool.query("alter table users add column if not exists password_reset_token_hash text");
+      await pool.query("alter table users add column if not exists password_reset_expires_at timestamptz");
       await pool.query(
         "alter table users add column if not exists is_admin boolean not null default false"
       );

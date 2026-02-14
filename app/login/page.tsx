@@ -47,8 +47,18 @@ export default function LoginPage() {
     const urlParameters = new URLSearchParams(window.location.search);
 
     if (urlParameters.get("registered") === "1") {
-      // Exibe a confirmação de registo ao chegar da página de criação de conta.
-      setFeedback("Registo efetuado com sucesso.");
+      // Exibe orientação após registo para o utilizador confirmar o e-mail.
+      setFeedback("Conta criada com sucesso. Verifique o e-mail para confirmar a conta.");
+    }
+
+    if (urlParameters.get("confirmed") === "1") {
+      // Mostra confirmação quando o utilizador valida a conta pelo link enviado.
+      setFeedback("Conta confirmada com sucesso. Já pode iniciar sessão.");
+    }
+
+    if (urlParameters.get("confirmed") === "0") {
+      // Informa token inválido ou expirado no fluxo de confirmação de conta.
+      setFeedback("Link de confirmação inválido ou expirado.");
     }
 
     // Mantém o utilizador autenticado ao regressar ao ecrã de login.
@@ -104,7 +114,7 @@ export default function LoginPage() {
       }
 
       router.push("/dashboard");
-    } catch (error) {
+    } catch {
       setFeedback("Não foi possível iniciar sessão. Tente novamente.");
     } finally {
       setIsSubmitting(false);
@@ -169,6 +179,9 @@ export default function LoginPage() {
                 </button>
                 <Link className="text-sm font-semibold text-slate-500" href="/account">
                   Criar conta
+                </Link>
+                <Link className="text-sm font-semibold text-slate-500" href="/forgot-password">
+                  Esqueci-me da password
                 </Link>
               </div>
             </form>

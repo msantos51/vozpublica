@@ -1,7 +1,5 @@
 import { Buffer } from "node:buffer";
-
 import { lookup } from "node:dns";
-
 import { Socket, connect as connectTcp } from "node:net";
 import { TLSSocket, connect as connectTls } from "node:tls";
 
@@ -198,48 +196,6 @@ const sendCommand = async (socket: Socket, command: string) => {
 export const sendEmail = async (payload: MailPayload) => {
   // Envia e-mail transacional via SMTP, suportando TLS direto (465) e STARTTLS (587).
   const config = getSmtpConfig();
-  const ipv4Addresses = await resolveIpv4Addresses(config.host);
-  const connectionTargets = [...ipv4Addresses, config.host];
-
-  const connectToTarget = async (targetHost: string) => {
-    // Tenta conexão por destino individual para permitir múltiplas tentativas com timeout controlado.
-    if (config.secure) {
-      const tlsSocket = connectTls({ host: targetHost, port: config.port, servername: config.host });
-
-      await new Promise<void>((resolve, reject) => {
-        // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
-        const onError = (error: Error) => {
-          cleanup();
-          reject(error);
-        };
-
-        const onTimeout = () => {
-          cleanup();
-          tlsSocket.destroy();
-          reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
-        };
-
-        const onSecureConnect = () => {
-          cleanup();
-          resolve();
-        };
-
-        const cleanup = () => {
-          tlsSocket.off("secureConnect", onSecureConnect);
-          tlsSocket.off("error", onError);
-          tlsSocket.off("timeout", onTimeout);
-          tlsSocket.setTimeout(0);
-        };
-
-        tlsSocket.once("secureConnect", onSecureConnect);
-        tlsSocket.once("error", onError);
-        tlsSocket.once("timeout", onTimeout);
-        tlsSocket.setTimeout(config.connectionTimeoutMs);
-      });
-
-      return tlsSocket;
-    }
-
 
   let ipv4Addresses: string[] = [];
 
@@ -291,21 +247,17 @@ export const sendEmail = async (payload: MailPayload) => {
       return tlsSocket;
     }
 
-
     const tcpSocket = connectTcp({ host: targetHost, port: config.port });
     await waitForConnect(tcpSocket, config.connectionTimeoutMs);
     return tcpSocket;
   };
 
   let socket: Socket | TLSSocket | null = null;
-
   const attemptErrors: string[] = [];
-
 
   for (const targetHost of connectionTargets) {
     try {
       socket = await connectToTarget(targetHost);
-
       break;
     } catch (error) {
       const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
@@ -319,7 +271,6 @@ export const sendEmail = async (payload: MailPayload) => {
       : "Nenhuma tentativa de conexão SMTP foi executada.";
 
     throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${attemptsSummary}`);
-
   }
 
   try {

@@ -29,7 +29,9 @@ type PasswordForm = {
   confirmNewPassword: string;
 };
 
-type StoredUserProfile = Pick<UserProfile, "email" | "nationalId">;
+
+type StoredUserProfile = Pick<UserProfile, "email" | "nationalId" | "birthDate">;
+
 
 type ProfileResponse = {
   user?: {
@@ -76,6 +78,33 @@ const getStoredNationalId = (email: string) => {
 
   return "";
 };
+
+
+const normalizeBirthDateForInput = (birthDate: string | null, email: string) => {
+  // Garante formato YYYY-MM-DD no input date e usa fallback local quando necessário.
+  if (birthDate) {
+    return birthDate.slice(0, 10);
+  }
+
+  const storedUserRaw = localStorage.getItem(userStorageKey);
+
+  if (!storedUserRaw) {
+    return "";
+  }
+
+  try {
+    const storedUser = JSON.parse(storedUserRaw) as StoredUserProfile;
+
+    if (storedUser.email === email) {
+      return (storedUser.birthDate ?? "").slice(0, 10);
+    }
+  } catch (error) {
+    return "";
+  }
+
+  return "";
+};
+
 
 const educationOptions = [
   { value: "6th_grade", label: "6º Ano" },
@@ -140,7 +169,7 @@ export default function DashboardPage() {
           lastName: data.user.lastName,
           fullName: data.user.fullName,
           email: data.user.email,
-          birthDate: data.user.birthDate ?? "",
+          birthDate: normalizeBirthDateForInput(data.user.birthDate, data.user.email),
           city: data.user.city ?? "",
           gender: data.user.gender ?? "",
           educationLevel: data.user.educationLevel ?? "",

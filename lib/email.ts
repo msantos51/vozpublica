@@ -72,6 +72,15 @@ const encodeHeader = (value: string) => {
 
 const normalizeLineBreaks = (value: string) => value.replace(/\r?\n/g, "\r\n");
 
+const getSafeErrorMessage = (error: unknown, fallbackMessage: string) => {
+  // Normaliza mensagens de erro para nunca devolver texto vazio nos logs e na resposta final.
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return fallbackMessage;
+};
+
 const waitForResponse = (socket: Socket) =>
   new Promise<{ code: number; raw: string }>((resolve, reject) => {
     const chunks: string[] = [];
@@ -231,27 +240,86 @@ export const sendEmail = async (payload: MailPayload) => {
       return tlsSocket;
     }
 
+
+  let ipv4Addresses: string[] = [];
+
+  try {
+    ipv4Addresses = await resolveIpv4Addresses(config.host);
+  } catch {
+    // Mantém fallback para hostname quando a resolução manual de IPv4 falha neste ambiente.
+    ipv4Addresses = [];
+  }
+
+  const connectionTargets = [...ipv4Addresses, config.host];
+
+  const connectToTarget = async (targetHost: string) => {
+    // Tenta conexão por destino individual para permitir múltiplas tentativas com timeout controlado.
+    if (config.secure) {
+      const tlsSocket = connectTls({ host: targetHost, port: config.port, servername: config.host });
+
+      await new Promise<void>((resolve, reject) => {
+        // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
+        const onError = (error: Error) => {
+          cleanup();
+          reject(error);
+        };
+
+        const onTimeout = () => {
+          cleanup();
+          tlsSocket.destroy();
+          reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
+        };
+
+        const onSecureConnect = () => {
+          cleanup();
+          resolve();
+        };
+
+        const cleanup = () => {
+          tlsSocket.off("secureConnect", onSecureConnect);
+          tlsSocket.off("error", onError);
+          tlsSocket.off("timeout", onTimeout);
+          tlsSocket.setTimeout(0);
+        };
+
+        tlsSocket.once("secureConnect", onSecureConnect);
+        tlsSocket.once("error", onError);
+        tlsSocket.once("timeout", onTimeout);
+        tlsSocket.setTimeout(config.connectionTimeoutMs);
+      });
+
+      return tlsSocket;
+    }
+
+
     const tcpSocket = connectTcp({ host: targetHost, port: config.port });
     await waitForConnect(tcpSocket, config.connectionTimeoutMs);
     return tcpSocket;
   };
 
   let socket: Socket | TLSSocket | null = null;
-  let lastConnectionError: Error | null = null;
+
+  const attemptErrors: string[] = [];
+
 
   for (const targetHost of connectionTargets) {
     try {
       socket = await connectToTarget(targetHost);
-      lastConnectionError = null;
+
       break;
     } catch (error) {
-      lastConnectionError = error instanceof Error ? error : new Error("Erro desconhecido ao conectar SMTP.");
+      const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
+      attemptErrors.push(`${targetHost}: ${errorMessage}`);
     }
   }
 
   if (!socket) {
-    const connectionMessage = lastConnectionError?.message ?? "Não foi possível abrir conexão SMTP.";
-    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${connectionMessage}`);
+    const attemptsSummary = attemptErrors.length
+      ? attemptErrors.join(" | ")
+      : "Nenhuma tentativa de conexão SMTP foi executada.";
+
+    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${attemptsSummary}`);
+
   }
 
   try {
@@ -299,7 +367,7 @@ export const sendEmail = async (payload: MailPayload) => {
 
     await sendCommand(socket, "QUIT");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido.";
+    const message = getSafeErrorMessage(error, "Erro desconhecido durante o envio SMTP.");
     throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${message}`);
   } finally {
     socket.end();

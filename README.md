@@ -69,25 +69,26 @@ No painel é possível:
 - definir datas de abertura e fecho;
 - alterar estado (`draft`, `open`, `closed`).
 
-## Configuração de SMTP (recuperação de password e confirmação de e-mail)
+## Configuração de envio de e-mail com Resend (recuperação de password e confirmação de e-mail)
 
 Defina estas variáveis no ambiente de execução:
 
 ```bash
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=vozpublica.contacto@gmail.com
-SMTP_PASS=<gmail-app-password>
-SMTP_FROM=vozpublica.contacto@gmail.com
-SMTP_CONNECTION_TIMEOUT_MS=10000
+RESEND_API_KEY=<resend-api-key>
+RESEND_FROM="VozPublica <onboarding@resend.dev>"
 
-# Opcional: portas de fallback separadas por vírgula.
-# Exemplo: se a 587 estiver bloqueada, tenta 465 automaticamente (ou vice-versa).
-SMTP_FALLBACK_PORTS=587
+# Opcional: endpoint custom (útil para testes/integração interna)
+RESEND_API_URL=https://api.resend.com/emails
+
+# Opcional: timeout da chamada HTTP em milissegundos
+RESEND_TIMEOUT_MS=10000
+
+# Recomendado: URL pública da aplicação para links dos e-mails
+APP_BASE_URL=https://vozpublica.onrender.com
 ```
 
-Notas importantes para Gmail:
-- `SMTP_PASS` deve ser uma **App Password** (não a password normal da conta).
-- Se usar `SMTP_PORT=587`, recomenda-se `SMTP_SECURE=false` (STARTTLS).
-- Se usar `SMTP_PORT=465`, recomenda-se `SMTP_SECURE=true` (TLS direto).
+Notas importantes para Resend:
+- `RESEND_API_KEY` é obrigatória para autorizar o envio.
+- `RESEND_FROM` deve usar um remetente válido no Resend (domínio verificado em produção).
+- `onboarding@resend.dev` pode ser usado para testes iniciais, seguindo as regras da conta.
+- Se não definir `APP_BASE_URL`, o sistema tenta `NEXT_PUBLIC_APP_URL`, `VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_URL` e `RENDER_EXTERNAL_URL`; em último caso usa `http://localhost:3000`.

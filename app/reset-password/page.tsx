@@ -2,13 +2,36 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 type ResetResponse = {
   message: string;
 };
 
+// Componente externo que envolve o conteúdo em Suspense para cumprir
+// os requisitos do Next.js ao usar useSearchParams em rotas de app router.
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoadingState />}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
+
+// Estado de carregamento simples enquanto os parâmetros de pesquisa
+// ainda não estão disponíveis durante o render inicial.
+function ResetPasswordLoadingState() {
+  return (
+    <section className="space-y-8">
+      <div className="mx-auto w-full max-w-3xl rounded-[32px] bg-white p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
+        <p className="text-sm text-slate-500">A carregar formulário de recuperação...</p>
+      </div>
+    </section>
+  );
+}
+
+// Conteúdo principal da página com o formulário de redefinição de password.
+function ResetPasswordContent() {
   const searchParameters = useSearchParams();
   const token = searchParameters.get("token") || "";
   const [newPassword, setNewPassword] = useState("");

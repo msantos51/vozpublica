@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+
+import { FormEvent, useMemo, useState } from "react";
+
 
 type FormData = {
   name: string;
@@ -9,6 +11,12 @@ type FormData = {
   message: string;
 };
 
+
+type ContactApiResponse = {
+  message?: string;
+};
+
+
 const initialFormData: FormData = {
   name: "",
   email: "",
@@ -16,11 +24,28 @@ const initialFormData: FormData = {
   message: "",
 };
 
+
+const contactRecipient = "vozpublica.contacto@gmail.com";
+
+
 export default function ContactPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [statusMessage, setStatusMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [showFallbackEmailLink, setShowFallbackEmailLink] = useState(false);
+
+  const fallbackMailToLink = useMemo(() => {
+    // Gera link de contingência para abrir o cliente de e-mail sem perder os dados do formulário.
+    const fallbackSubject = encodeURIComponent(`[Contacto] ${formData.subject || "Sem assunto"}`);
+    const fallbackBody = encodeURIComponent(
+      `Nome: ${formData.name}\nE-mail: ${formData.email}\n\nMensagem:\n${formData.message}`,
+    );
+
+    return `mailto:${contactRecipient}?subject=${fallbackSubject}&body=${fallbackBody}`;
+  }, [formData]);
+
 
   const handleFieldChange = (field: keyof FormData, value: string) => {
     // Atualiza apenas o campo alterado, mantendo o restante estado intacto.
@@ -34,6 +59,9 @@ export default function ContactPage() {
     event.preventDefault();
     setStatusMessage("");
     setIsSuccess(false);
+
+    setShowFallbackEmailLink(false);
+
     setIsSubmitting(true);
 
     try {
@@ -45,10 +73,13 @@ export default function ContactPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = (await response.json()) as { message?: string };
+
+      const data = (await response.json()) as ContactApiResponse;
 
       if (!response.ok) {
         setStatusMessage(data.message || "Não foi possível enviar a mensagem.");
+        setShowFallbackEmailLink(response.status === 503);
+
         return;
       }
 
@@ -57,6 +88,9 @@ export default function ContactPage() {
       setFormData(initialFormData);
     } catch {
       setStatusMessage("Erro de ligação. Tente novamente dentro de alguns instantes.");
+
+      setShowFallbackEmailLink(true);
+
     } finally {
       setIsSubmitting(false);
     }
@@ -69,7 +103,7 @@ export default function ContactPage() {
         {/* Cartão com formulário para envio de mensagens. */}
         <article className="rounded-[32px] bg-[color:var(--surface)] p-8 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex flex-col gap-6">
-            {/* Título e instruções do formulário de contato. */}
+            {/* Título e instruções do formulário de contacto. */}
             <div>
               <p className="section-label">Formulário de contacto</p>
               <h1 className="mt-2 page-title">Envie a sua mensagem para a equipa.</h1>
@@ -77,7 +111,9 @@ export default function ContactPage() {
                 Partilhe dúvidas, sugestões ou solicitações e responderemos em breve.
               </p>
             </div>
-            {/* Formulário com campos essenciais para contato. */}
+
+            {/* Formulário com campos essenciais para contacto. */}
+
             <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 Nome
@@ -126,7 +162,7 @@ export default function ContactPage() {
                   value={formData.message}
                 />
               </label>
-              {/* Ações do formulário de contato. */}
+              {/* Ações do formulário de contacto. */}
               <div className="flex flex-wrap items-center gap-3 md:col-span-2">
                 <button
                   className="button-size-login bg-[color:var(--primary)] text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
@@ -146,6 +182,16 @@ export default function ContactPage() {
                   {statusMessage}
                 </p>
               ) : null}
+
+              {showFallbackEmailLink ? (
+                <p className="text-sm md:col-span-2 text-slate-700">
+                  Se preferir, pode enviar agora por e-mail: {" "}
+                  <a className="font-semibold text-[color:var(--primary)] underline" href={fallbackMailToLink}>
+                    {contactRecipient}
+                  </a>
+                </p>
+              ) : null}
+
             </form>
           </div>
         </article>

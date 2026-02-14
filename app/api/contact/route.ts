@@ -22,6 +22,18 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+
+const normalizeContactMessage = (value: string) =>
+  value
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .trim();
+
+const isResendSandboxError = (errorMessage: string) =>
+  errorMessage.toLowerCase().includes("you can only send testing emails");
+
+
 export async function POST(request: Request) {
   let payload: ContactPayload;
 
@@ -37,7 +49,9 @@ export async function POST(request: Request) {
   const name = sanitizeText(payload.name || "");
   const email = sanitizeText(payload.email || "").toLowerCase();
   const subject = sanitizeText(payload.subject || "");
-  const message = payload.message?.trim() || "";
+
+  const message = normalizeContactMessage(payload.message || "");
+
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json(
@@ -57,6 +71,10 @@ export async function POST(request: Request) {
     await sendEmail({
       to: contactRecipient,
       subject: `[Contacto] ${subject}`,
+
+      replyTo: email,
+      text: `Novo contacto recebido\n\nNome: ${name}\nE-mail: ${email}\nAssunto: ${subject}\n\nMensagem:\n${message}`,
+
       html: `
         <h2>Novo contacto recebido</h2>
         <p><strong>Nome:</strong> ${escapeHtml(name)}</p>
@@ -74,6 +92,20 @@ export async function POST(request: Request) {
         ? error.message
         : "Não foi possível enviar a mensagem no momento.";
 
-    return NextResponse.json({ message: safeMessage }, { status: 500 });
+    if (isResendSandboxError(safeMessage)) {
+      return NextResponse.json(
+        {
+          message:
+            "O envio está temporariamente indisponível por configuração do provedor de e-mail (modo de testes). A equipa já foi notificada para concluir a ativação do domínio.",
+        },
+        { status: 503 },
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Não foi possível enviar a mensagem agora. Tente novamente em alguns minutos." },
+      { status: 500 },
+    );
+
   }
 }

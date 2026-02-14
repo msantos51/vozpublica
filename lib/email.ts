@@ -59,6 +59,12 @@ const resolveSecureMode = (secureFromEnv: string | undefined, port: number) => {
   return port === 465;
 };
 
+const getSecurityModesForPort = (secureFromEnv: string | undefined, port: number) => {
+  // Define ordem de tentativas de segurança por porto para tolerar configuração SMTP_SECURE incorreta.
+  const preferredMode = resolveSecureMode(secureFromEnv, port);
+  return [preferredMode, !preferredMode];
+};
+
 const getSmtpConfig = (): SmtpConfig => {
   // Lê configuração SMTP e aplica defaults para envio via conta principal do projeto.
   const host = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
@@ -255,12 +261,11 @@ export const sendEmail = async (payload: MailPayload) => {
 
   const connectionTargets = [...ipv4Addresses, config.host];
   const connectionPorts = [config.port, ...config.fallbackPorts];
+  const secureFromEnv = process.env.SMTP_SECURE?.trim().toLowerCase();
 
-  const connectToTarget = async (targetHost: string, targetPort: number) => {
+  const connectToTarget = async (targetHost: string, targetPort: number, useTlsFromStart: boolean) => {
     // Tenta conexão por destino individual para permitir múltiplas tentativas com timeout controlado.
-    const shouldUseTlsFromStart = resolveSecureMode(process.env.SMTP_SECURE?.trim().toLowerCase(), targetPort);
-
-    if (shouldUseTlsFromStart) {
+    if (useTlsFromStart) {
       const tlsSocket = connectTls({ host: targetHost, port: targetPort, servername: config.host });
 
       await new Promise<void>((resolve, reject) => {
@@ -304,17 +309,28 @@ export const sendEmail = async (payload: MailPayload) => {
 
   let socket: Socket | TLSSocket | null = null;
   let connectedPort = config.port;
+  let connectedWithTlsFromStart = config.secure;
   const attemptErrors: string[] = [];
 
   for (const targetPort of connectionPorts) {
-    for (const targetHost of connectionTargets) {
-      try {
-        socket = await connectToTarget(targetHost, targetPort);
-        connectedPort = targetPort;
+    const securityModes = getSecurityModesForPort(secureFromEnv, targetPort);
+
+    for (const useTlsFromStart of securityModes) {
+      for (const targetHost of connectionTargets) {
+        try {
+          socket = await connectToTarget(targetHost, targetPort, useTlsFromStart);
+          connectedPort = targetPort;
+          connectedWithTlsFromStart = useTlsFromStart;
+          break;
+        } catch (error) {
+          const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
+          const modeLabel = useTlsFromStart ? "tls" : "starttls";
+          attemptErrors.push(`${targetHost}:${targetPort}/${modeLabel}: ${errorMessage}`);
+        }
+      }
+
+      if (socket) {
         break;
-      } catch (error) {
-        const errorMessage = getSafeErrorMessage(error, "Falha sem detalhe retornado pelo socket.");
-        attemptErrors.push(`${targetHost}:${targetPort}: ${errorMessage}`);
       }
     }
 
@@ -342,7 +358,7 @@ export const sendEmail = async (payload: MailPayload) => {
 
     await sendCommand(socket, `EHLO ${config.host}`);
 
-    if (!resolveSecureMode(process.env.SMTP_SECURE?.trim().toLowerCase(), connectedPort)) {
+    if (!connectedWithTlsFromStart) {
       await sendCommand(socket, "STARTTLS");
       socket = await upgradeToTls(socket, config.host, config.connectionTimeoutMs);
       await sendCommand(socket, `EHLO ${config.host}`);

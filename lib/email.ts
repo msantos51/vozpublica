@@ -51,16 +51,17 @@ const getSmtpConfig = (): SmtpConfig => {
   return { host, port, username, password, from, secure, connectionTimeoutMs: timeoutFromEnv };
 };
 
-const resolveIpv4Address = async (host: string) =>
-  new Promise<string>((resolve, reject) => {
-    // Resolve explicitamente IPv4 para reduzir falhas em ambientes com rota IPv6 instável.
-    lookup(host, { family: 4, all: false }, (error, address) => {
-      if (error || !address) {
+const resolveIpv4Addresses = async (host: string) =>
+  new Promise<string[]>((resolve, reject) => {
+    // Resolve todos os IPv4 disponíveis para permitir fallback quando um IP específico está inacessível.
+    lookup(host, { family: 4, all: true }, (error, addresses) => {
+      if (error || !addresses.length) {
         reject(error ?? new Error(`Não foi possível resolver IPv4 para ${host}.`));
         return;
       }
 
-      resolve(address);
+      const uniqueAddresses = Array.from(new Set(addresses.map((entry) => entry.address)));
+      resolve(uniqueAddresses);
     });
   });
 
@@ -188,48 +189,69 @@ const sendCommand = async (socket: Socket, command: string) => {
 export const sendEmail = async (payload: MailPayload) => {
   // Envia e-mail transacional via SMTP, suportando TLS direto (465) e STARTTLS (587).
   const config = getSmtpConfig();
+  const ipv4Addresses = await resolveIpv4Addresses(config.host);
+  const connectionTargets = [...ipv4Addresses, config.host];
 
-  const smtpIpv4 = await resolveIpv4Address(config.host);
-  let socket: Socket | TLSSocket;
+  const connectToTarget = async (targetHost: string) => {
+    // Tenta conexão por destino individual para permitir múltiplas tentativas com timeout controlado.
+    if (config.secure) {
+      const tlsSocket = connectTls({ host: targetHost, port: config.port, servername: config.host });
 
-  if (config.secure) {
-    socket = connectTls({ host: smtpIpv4, port: config.port, servername: config.host });
+      await new Promise<void>((resolve, reject) => {
+        // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
+        const onError = (error: Error) => {
+          cleanup();
+          reject(error);
+        };
 
-    await new Promise<void>((resolve, reject) => {
-      // Escuta secureConnect para garantir que o handshake TLS inicial concluiu com sucesso.
-      const onError = (error: Error) => {
-        cleanup();
-        reject(error);
-      };
+        const onTimeout = () => {
+          cleanup();
+          tlsSocket.destroy();
+          reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
+        };
 
-      const onTimeout = () => {
-        cleanup();
-        socket.destroy();
-        reject(new Error(`Timeout ao conectar por TLS ao SMTP após ${config.connectionTimeoutMs}ms.`));
-      };
+        const onSecureConnect = () => {
+          cleanup();
+          resolve();
+        };
 
-      const onSecureConnect = () => {
-        cleanup();
-        resolve();
-      };
+        const cleanup = () => {
+          tlsSocket.off("secureConnect", onSecureConnect);
+          tlsSocket.off("error", onError);
+          tlsSocket.off("timeout", onTimeout);
+          tlsSocket.setTimeout(0);
+        };
 
-      const cleanup = () => {
-        socket.off("secureConnect", onSecureConnect);
-        socket.off("error", onError);
-        socket.off("timeout", onTimeout);
-        socket.setTimeout(0);
-      };
+        tlsSocket.once("secureConnect", onSecureConnect);
+        tlsSocket.once("error", onError);
+        tlsSocket.once("timeout", onTimeout);
+        tlsSocket.setTimeout(config.connectionTimeoutMs);
+      });
 
-      socket.once("secureConnect", onSecureConnect);
-      socket.once("error", onError);
-      socket.once("timeout", onTimeout);
-      socket.setTimeout(config.connectionTimeoutMs);
-    });
-  } else {
+      return tlsSocket;
+    }
 
-    socket = connectTcp({ host: smtpIpv4, port: config.port });
+    const tcpSocket = connectTcp({ host: targetHost, port: config.port });
+    await waitForConnect(tcpSocket, config.connectionTimeoutMs);
+    return tcpSocket;
+  };
 
-    await waitForConnect(socket, config.connectionTimeoutMs);
+  let socket: Socket | TLSSocket | null = null;
+  let lastConnectionError: Error | null = null;
+
+  for (const targetHost of connectionTargets) {
+    try {
+      socket = await connectToTarget(targetHost);
+      lastConnectionError = null;
+      break;
+    } catch (error) {
+      lastConnectionError = error instanceof Error ? error : new Error("Erro desconhecido ao conectar SMTP.");
+    }
+  }
+
+  if (!socket) {
+    const connectionMessage = lastConnectionError?.message ?? "Não foi possível abrir conexão SMTP.";
+    throw new Error(`Falha ao enviar e-mail via SMTP (${config.host}:${config.port}): ${connectionMessage}`);
   }
 
   try {

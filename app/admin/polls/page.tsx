@@ -242,7 +242,7 @@ export default function AdminPollsPage() {
         <aside className="rounded-[32px] bg-white p-6 shadow-[0_20px_50px_rgba(31,41,55,0.08)]">
           <div className="flex items-center justify-between">
             <h2 className="section-title">Polls</h2>
-            <button className="text-sm font-semibold text-[color:var(--primary)]" onClick={handleNewPoll}>
+            <button className="button-text-standard text-[color:var(--primary)]" onClick={handleNewPoll}>
               Nova
             </button>
           </div>

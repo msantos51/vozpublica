@@ -34,7 +34,6 @@ type UserProfile = {
 
 type ChartItem = {
   label: string;
-  count: number;
   percentage: number;
 };
 
@@ -258,7 +257,6 @@ export default function VotacoesPage() {
 
       return {
         label: option,
-        count,
         percentage,
       };
     });
@@ -483,9 +481,7 @@ export default function VotacoesPage() {
                           <div key={item.label} className="space-y-2">
                             <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
                               <span>{item.label}</span>
-                              <span>
-                                {item.percentage}% ({item.count})
-                              </span>
+                              <span>{item.percentage}%</span>
                             </div>
                             <div className="h-2 w-full rounded-full bg-[color:var(--primary-soft)]">
                               <div

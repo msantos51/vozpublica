@@ -9,11 +9,11 @@ export default function AboutPage() {
           <div className="space-y-4">
             <h1 className="page-title">
               Sobre a{" "}
-              <span className="text-[color:var(--primary)]">Voz Pública</span>
+              <span className="text-[color:var(--primary)]">PubliQuestão</span>
             </h1>
             <p className="text-base leading-7 text-justify text-zinc-600">
               A{" "}
-              <span className="text-[color:var(--primary)]">Voz Pública</span>{" "}
+              <span className="text-[color:var(--primary)]">PubliQuestão</span>{" "}
               nasceu para
               dar espaço à opinião das pessoas. Acreditamos que todos devem
               poder participar, votar e acompanhar a opinião coletiva sobre os
@@ -28,14 +28,14 @@ export default function AboutPage() {
             </p>
             <p className="text-base leading-7 text-justify text-zinc-600">
               Ao mesmo tempo, a{" "}
-              <span className="text-[color:var(--primary)]">Voz Pública</span>{" "}
+              <span className="text-[color:var(--primary)]">PubliQuestão</span>{" "}
               transforma essa participação em conhecimento. As votações geram
               dados anónimos e agregados que permitem identificar tendências,
               padrões e sinais relevantes da sociedade.
             </p>
             <p className="text-base leading-7 text-justify text-zinc-600">
               É por isso que a{" "}
-              <span className="text-[color:var(--primary)]">Voz Pública</span>{" "}
+              <span className="text-[color:var(--primary)]">PubliQuestão</span>{" "}
               é também uma oportunidade para empresas, marcas e organizações.
               Através de estudos de opinião discretos e imparciais, ajudamos a
               compreender melhor públicos, perceções e comportamentos — sem

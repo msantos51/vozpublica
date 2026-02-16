@@ -25,7 +25,7 @@ const poppins = Poppins({
 
 // Define os metadados globais usados pelo Next.js.
 export const metadata: Metadata = {
-  title: "Voz Pública",
+  title: "PubliQuestão",
   description: "Portal de participação cidadã e informação pública.",
 };
 
@@ -46,7 +46,7 @@ export default function RootLayout({
             {/* Marca do site alinhada à esquerda em todas as resoluções. */}
             <div className="flex items-center">
               <span className="bg-gradient-to-r from-[#b67ee8] to-[#fea076] bg-clip-text text-2xl font-semibold text-transparent">
-                Voz Pública
+                PubliQuestão
               </span>
             </div>
             {/* Navegação principal com painel compacto em mobile e barra horizontal em desktop. */}

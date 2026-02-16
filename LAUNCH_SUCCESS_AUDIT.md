@@ -1,4 +1,4 @@
-# Launch & Success Audit — VozPublica
+# Launch & Success Audit — PubliQuestão
 
 ## Objetivo
 Checklist prático do que falta para o site estar pronto para lançamento e aumentar a probabilidade de sucesso de produto.

@@ -14,7 +14,7 @@ export default function EnterprisePage() {
                 Insights reais a partir da opinião das pessoas.
               </h1>
               <p className="text-base leading-7 text-justify text-zinc-600">
-                A Voz Pública ajuda marcas a compreender melhor o que as pessoas
+                A PubliQuestão ajuda marcas a compreender melhor o que as pessoas
                 pensam, através de estudos de opinião rápidos, anónimos e baseados
                 em dados reais.
               </p>

@@ -46,7 +46,7 @@ export const createEmailConfirmationTemplate = (token: string) => {
   const confirmationUrl = `${appBaseUrl}/api/auth/confirm-email?token=${encodeURIComponent(token)}`;
 
   return {
-    subject: "Confirmação de conta - VozPública",
+    subject: "Confirmação de conta - PubliQuestão",
     html: createLayout(
       "Confirme a sua conta",
       "Obrigado pelo registo. Para concluir a criação da conta e poder iniciar sessão, confirme o seu e-mail.",
@@ -62,7 +62,7 @@ export const createPasswordResetTemplate = (token: string) => {
   const resetUrl = `${appBaseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
   return {
-    subject: "Reposição de password - VozPública",
+    subject: "Reposição de password - PubliQuestão",
     html: createLayout(
       "Reposição de password",
       "Recebemos um pedido para redefinir a sua password. Clique no botão abaixo para criar uma nova password.",
